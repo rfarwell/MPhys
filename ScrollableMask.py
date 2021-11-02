@@ -5,6 +5,8 @@ of the slices of a particular DICOM series
 In the future I will adapt this to allow input from the user, in the terminal.
 The input would be: path to DICOM series, path to RTSTRUCT and ROI.
 
+edited from: https://matplotlib.org/stable/gallery/event_handling/image_slices_viewer.html
+
 Rory Farwell 02/11/2021
 """
 #=======================IMPORTING FUNCTIONS========================================
