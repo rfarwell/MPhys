@@ -10,7 +10,6 @@
     3D Slicer License version 1.0 (December 20, 2005).
     See the License.txt file or http://slicer.org for full text.
 """
-#hello test
 
 # {{{ packages and logging utilities
 
