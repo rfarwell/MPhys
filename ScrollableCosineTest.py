@@ -1,3 +1,8 @@
+"""
+Source code: https://stackoverflow.com/questions/18390461/scroll-backwards-and-forwards-through-matplotlib-plots
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
