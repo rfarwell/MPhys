@@ -28,8 +28,13 @@ print(rtstruct.get_roi_names())
 
 
 """ The below loads the 3D Mask, for the chosen ROI,
-from the RT Struct file. """
-mask_3d = rtstruct.get_roi_mask_by_name("GTV-1") 
+from the RT Struct file. By changing the sum for mask_3d the user can choose
+which ROI are masked. """
+mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
+mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
+mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
+mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
+mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left + mask_3d_GTV_1 +mask_3d_spinal_cord
 
 
 """ The below produces an array with the length of the number of slices
