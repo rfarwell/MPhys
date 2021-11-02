@@ -68,7 +68,7 @@ class IndexTracker:
 
     def update(self):
         self.im.set_data(self.X[:, :, self.ind])
-        self.ax.set_ylabel('slice %s' % (self.ind + 1))
+        self.ax.set_ylabel('slice %s' % (self.ind + 1) + 'of GTV-1')
         self.im.axes.figure.canvas.draw()
 
 fig, ax = plt.subplots(1, 1)
