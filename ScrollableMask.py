@@ -62,12 +62,12 @@ class IndexTracker:
         ax.set_title('use scroll wheel to navigate images')
 
         self.X = X
-        self.volume = sitk.GetArrayFromImage(volume)
-        print(self.volume.shape)
+        self.volume = sitk.GetArrayFromImage(volume) #can hash out to just see mask
+        print(self.volume.shape) #can hash out to just see mask
         rows, cols, self.slices = X.shape
         self.ind = self.slices//2
 
-        self.vol = ax.imshow(self.volume[self.ind], cmap = 'gray')
+        self.vol = ax.imshow(self.volume[self.ind], cmap = 'gray') #can hash out to just see mask
         self.im = ax.imshow(self.X[:, :, self.ind], alpha = 0.5)
         
         self.update()
@@ -83,7 +83,7 @@ class IndexTracker:
         self.update()
 
     def update(self):
-        self.vol.set_data(self.volume[self.ind])
+        self.vol.set_data(self.volume[self.ind]) #can hash out to just see mask
         self.im.set_data(self.X[:, :, self.ind])
         
         self.ax.set_ylabel('GTV-1 of slice %s' % (self.ind + 1))
@@ -93,10 +93,10 @@ fig, ax = plt.subplots(1, 1)
 
 X = mask_3d
 
-reader = sitk.ImageSeriesReader()
-dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT')
-reader.SetFileNames(dcm_paths)
-volume = reader.Execute()
+reader = sitk.ImageSeriesReader() #can hash out to just see mask
+dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT') #can hash out to just see mask
+reader.SetFileNames(dcm_paths) #can hash out to just see mask
+volume = reader.Execute() #can hash out to just see mask
 
 tracker = IndexTracker(ax, mask_3d, volume)
 
