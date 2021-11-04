@@ -50,7 +50,9 @@ for filename in os.listdir(filepath) :
         _3_digit_number_of_patient = '{0:03}'.format(number_of_patient)
         print(_3_digit_number_of_patient)
         x = resample_volume(volume)
-        sitk.WriteImage(x, "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_nifti_114/LUNG1-" + str(_3_digit_number_of_patient) + ".nii")
+        number_of_patient += 1
+        print(number_of_patient)
+        #sitk.WriteImage(x, "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_nifti_114/LUNG1-" + str(_3_digit_number_of_patient) + ".nii")
     else:
         pass
 
