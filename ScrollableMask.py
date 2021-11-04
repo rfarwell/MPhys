@@ -37,8 +37,8 @@ mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right")
 mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
 mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
 mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
-mask_3d = mask_3d_Lung_Right
-mask_3d_GTV_1 
+mask_3d = mask_3d_GTV_1
+
 
 
 """mask_3d_Lung_Right + mask_3d_Lung_Left +"""  """+mask_3d_spinal_cord"""
