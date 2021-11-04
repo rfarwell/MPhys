@@ -15,6 +15,7 @@ import sys
 import numpy as np
 from rt_utils import RTStructBuilder
 import matplotlib.pyplot as plt
+import SimpleITK as sitk
 #==================================================================================
 
 #=======================PRE-REQUISITES=============================================
@@ -36,9 +37,11 @@ mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right")
 mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
 mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
 mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
-mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left + mask_3d_GTV_1 +mask_3d_spinal_cord
+mask_3d = mask_3d_Lung_Right
+mask_3d_GTV_1 
 
 
+"""mask_3d_Lung_Right + mask_3d_Lung_Left +"""  """+mask_3d_spinal_cord"""
 """ The below produces an array with the length of the number of slices
 in the DICOM series. This will be used when we label the axes of the plot. """
 numbers = np.arange(mask_3d.shape[2])
@@ -54,16 +57,22 @@ it to work. I need to see if I can fix this.
 """
 
 class IndexTracker:
-    def __init__(self, ax, X):
+    def __init__(self, ax, X, volume):
         self.ax = ax
         ax.set_title('use scroll wheel to navigate images')
 
         self.X = X
+        self.volume = sitk.GetArrayFromImage(volume)
+        print(self.volume.shape)
         rows, cols, self.slices = X.shape
         self.ind = self.slices//2
 
-        self.im = ax.imshow(self.X[:, :, self.ind])
+        self.vol = ax.imshow(self.volume[self.ind], cmap = 'gray')
+        self.im = ax.imshow(self.X[:, :, self.ind], alpha = 0.5)
+        
         self.update()
+
+        
 
     def on_scroll(self, event):
         print("%s %s" % (event.button, event.step))
@@ -74,7 +83,9 @@ class IndexTracker:
         self.update()
 
     def update(self):
+        self.vol.set_data(self.volume[self.ind])
         self.im.set_data(self.X[:, :, self.ind])
+        
         self.ax.set_ylabel('GTV-1 of slice %s' % (self.ind + 1))
         self.im.axes.figure.canvas.draw()
 
@@ -82,7 +93,12 @@ fig, ax = plt.subplots(1, 1)
 
 X = mask_3d
 
-tracker = IndexTracker(ax, mask_3d)
+reader = sitk.ImageSeriesReader()
+dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT')
+reader.SetFileNames(dcm_paths)
+volume = reader.Execute()
+
+tracker = IndexTracker(ax, mask_3d, volume)
 
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
