@@ -16,6 +16,9 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== RESAMPLING THE DICOM FILE ===========================================
+Output_Spacing = [0.9765625, 0.9765625, 3.0]
+
+
 def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
@@ -26,7 +29,7 @@ def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     resample.SetOutputDirection(volume.GetDirection())
     resample.SetOutputOrigin(volume.GetOrigin())
     resample.SetSize(new_size)
-    resample.SetOutputSpacing([1, 1, 1])
+    resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
     resample.SetDefaultPixelValue(-1024)
 
     return resample.Execute(volume)
@@ -78,6 +81,7 @@ mask_3d = mask_3d - 1
 # print('rotated mask array shape: ' + str(mask_3d.shape))
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
+mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
@@ -93,7 +97,7 @@ def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
     resample.SetOutputDirection(volume.GetDirection())
     resample.SetOutputOrigin(volume.GetOrigin())
     resample.SetSize(new_size)
-    resample.SetOutputSpacing([1/3, 1/0.9765625, 1/0.9765625])
+    resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
     resample.SetDefaultPixelValue(0)
 
     return resample.Execute(volume)
@@ -170,9 +174,11 @@ print(volume_array.shape)
 
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
+#============================================================================================
 
-mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-print(mask_3d_resampled.shape)
+#=========================== COUNTING '1's ==================================================
+# mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
+# print(mask_3d_resampled.shape)
 
 # numbers = np.arange(mask_3d_resampled.shape[2])
 # slice_numbers = numbers + 1
@@ -195,3 +201,6 @@ print(mask_3d_resampled.shape)
 
 # print(mask_3d_resampled[:,:,23])
 
+
+#=============================================================================================
+print(DICOM.GetSpacing())
