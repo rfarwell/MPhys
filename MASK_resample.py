@@ -42,4 +42,20 @@ reader.SetFileNames(dcm_paths)
 DICOM = sitk.ReadImage(dcm_paths)
 DICOM_resampled = resample_volume(DICOM)
 
+print('================ NON-RESAMPLED DICOM DIMENSIONS ============')
+print('Image size: ' + str(DICOM.GetSize()))
+print('Image spacing: ' + str(DICOM.GetSpacing()))
+
+
+print('================ RESAMPLED DICOM DIMENSIONS ================')
 print('Image size: ' + str(DICOM_resampled.GetSize()))
+print('Image spacing: ' + str(DICOM_resampled.GetSpacing()))
+
+#===============================================================================================
+
+#=========================== RESAMPLING THE MASK ===============================================
+
+rtstruct = RTStructBuilder.create_from(
+  dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT", 
+  rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
+)
