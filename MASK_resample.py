@@ -3,6 +3,7 @@ This code will use the ResampleImageFilter function to resample both the DICOM a
 """
 
 #========================== IMPORTING LIBRARIES =================================================
+from genericpath import getsize
 import rt_utils
 import sys
 import numpy as np
@@ -16,7 +17,7 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== RESAMPLING THE DICOM FILE ===========================================
-Output_Spacing = [0.9765625, 0.9765625, 3.0]
+Output_Spacing = [1.0, 1.0, 4.0]
 
 
 def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
@@ -90,8 +91,10 @@ def permute_axes(volume) :
 
     return permute.Execute(volume)
 
-mask_3d_image = permute_axes(mask_3d_image)
-mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
+# mask_3d_image = permute_axes(mask_3d_image)
+# mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
+
+mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
@@ -101,13 +104,14 @@ def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
-    new_size = [512, 512, 134]
+    new_size = [134, 512, 512]
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
     resample.SetOutputDirection(volume.GetDirection())
     resample.SetOutputOrigin(volume.GetOrigin())
     resample.SetSize(new_size)
-    resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
+    # resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
+    resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
     resample.SetDefaultPixelValue(0)
 
     return resample.Execute(volume)
@@ -120,9 +124,9 @@ print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
 print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
 print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
 
-print('=============================================================')
-print('mask array shape: ' + str(mask_3d.shape))
-print('mask image shape: ' +str(mask_3d_image.GetSize()))
+# print('=============================================================')
+# print('mask array shape: ' + str(mask_3d.shape))
+# print('mask image shape: ' +str(mask_3d_image.GetSize()))
 
 #================================================================================================
 
@@ -167,7 +171,7 @@ fig, ax = plt.subplots(1, 1)
 #redefining mask_3d_image_resampled to mask_3d (array)
 mask_3d = sitk.GetArrayFromImage(mask_3d_image_resampled)
 X = sitk.GetImageFromArray(mask_3d)
-print(X.GetSize())
+#print(X.GetSize())
 X = sitk.GetArrayFromImage(X)
 
 reader = sitk.ImageSeriesReader() #can hash out to just see mask
@@ -211,5 +215,9 @@ plt.show()
 
 # print(mask_3d_resampled[:,:,23])
 
-
 #=============================================================================================
+
+#=========================== WRITING THE RESAMPLE MASK ARRAY AS A NIFTI FIL===================
+mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
+mask_3d_resampled.astype('uint8')
+sitk.WriteImage(mask_3d_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii")
