@@ -85,5 +85,57 @@ print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
 print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
 print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
 
+#================================================================================================
 
+#=========================== PLOTTING RESAMPLED IMAGES ONTO A SCROLLABLE PLOT ===================
 
+class IndexTracker:
+    def __init__(self, ax, X, volume):
+        self.ax = ax
+        ax.set_title('use scroll wheel to navigate images')
+
+        self.X = X
+        self.volume = sitk.GetArrayFromImage(volume) #can hash out to just see mask
+        #print(self.volume.shape) #can hash out to just see mask
+        rows, cols, self.slices = X.shape
+        self.ind = self.slices//2
+
+        self.vol = ax.imshow(self.volume[self.ind], cmap = 'gray') #can hash out to just see mask
+        self.im = ax.imshow(self.X[:, :, self.ind], alpha = 0.5)
+        
+        self.update()
+
+        
+    def on_scroll(self, event):
+        print("%s %s" % (event.button, event.step))
+        if event.button == 'up':
+            self.ind = (self.ind + 1) % self.slices
+        else:
+            self.ind = (self.ind - 1) % self.slices
+        self.update()
+
+    def update(self):
+        self.vol.set_data(self.volume[self.ind]) #can hash out to just see mask
+        self.im.set_data(self.X[:, :, self.ind])
+        
+        self.ax.set_ylabel('GTV-1 of slice %s' % (self.ind + 1))
+        self.im.axes.figure.canvas.draw()
+
+fig, ax = plt.subplots(1, 1)
+
+#redefining mask_3d_image_resampled to mask_3d (array)
+mask_3d = sitk.GetArrayFromImage(mask_3d_image_resampled)
+X = sitk.GetImageFromArray(mask_3d)
+print(X.GetSize())
+X = sitk.GetArrayFromImage(X)
+
+reader = sitk.ImageSeriesReader() #can hash out to just see mask
+dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT') #can hash out to just see mask
+reader.SetFileNames(dcm_paths) #can hash out to just see mask
+volume = reader.Execute() #can hash out to just see mask
+volume = resample_volume(volume)
+print(volume.GetSize())
+tracker = IndexTracker(ax, mask_3d, volume)
+
+fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
+plt.show()
