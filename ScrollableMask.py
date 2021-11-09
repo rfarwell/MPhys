@@ -22,7 +22,7 @@ import SimpleITK as sitk
 
 """ The below loads existing RT Struct. Requires the series path and existing RT Struct path """
 rtstruct = RTStructBuilder.create_from(
-  dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT", 
+  dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT", 
   rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
 )
 
@@ -63,7 +63,7 @@ class IndexTracker:
 
         self.X = X
         self.volume = sitk.GetArrayFromImage(volume) #can hash out to just see mask
-        print(self.volume.shape) #can hash out to just see mask
+        #print(self.volume.shape) #can hash out to just see mask
         rows, cols, self.slices = X.shape
         self.ind = self.slices//2
 
@@ -91,13 +91,17 @@ class IndexTracker:
 
 fig, ax = plt.subplots(1, 1)
 
-X = mask_3d
+mask_3d = mask_3d + 1
+mask_3d = mask_3d - 1
+X = sitk.GetImageFromArray(mask_3d)
+print(X.GetSize())
+X = sitk.GetArrayFromImage(X)
 
 reader = sitk.ImageSeriesReader() #can hash out to just see mask
-dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT') #can hash out to just see mask
+dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT') #can hash out to just see mask
 reader.SetFileNames(dcm_paths) #can hash out to just see mask
 volume = reader.Execute() #can hash out to just see mask
-
+print(volume.GetSize())
 tracker = IndexTracker(ax, mask_3d, volume)
 
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
