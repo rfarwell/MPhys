@@ -58,6 +58,7 @@ print('Image spacing: ' + str(DICOM_resampled.GetSpacing()))
 
 #=========================== RESAMPLING THE MASK ===============================================
 
+# Telling the code where to get the DICOMs and RTSTRUCT from
 rtstruct = RTStructBuilder.create_from(
   dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT", 
   rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
@@ -76,20 +77,21 @@ mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left
 mask_3d = mask_3d + 1
 mask_3d = mask_3d - 1
 
-# Rotating the image to try and fix the axis labels
-# mask_3d = np.rot90(mask_3d, 1, axes = (0,2))
-# print('rotated mask array shape: ' + str(mask_3d.shape))
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
-mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
+
 
 def permute_axes(volume) :
+    """
+    This function permutes the axes of the input volume.
+    """
     permute = sitk.PermuteAxesImageFilter()
     permute.SetOrder([2,1,0])
 
     return permute.Execute(volume)
 
 mask_3d_image = permute_axes(mask_3d_image)
+mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
 
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
@@ -99,13 +101,13 @@ def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
-    new_size = [134, 512, 512]
+    new_size = [512, 512, 134]
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
     resample.SetOutputDirection(volume.GetDirection())
     resample.SetOutputOrigin(volume.GetOrigin())
     resample.SetSize(new_size)
-    resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
+    resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
     resample.SetDefaultPixelValue(0)
 
     return resample.Execute(volume)
@@ -173,12 +175,12 @@ dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/Universi
 reader.SetFileNames(dcm_paths) #can hash out to just see mask
 volume = reader.Execute() #can hash out to just see mask
 volume = resample_DICOM(volume)
-print(volume.GetSize())
+# print(volume.GetSize())
 tracker = IndexTracker(ax, mask_3d, volume)
 
-print(volume.GetSize())
-volume_array = sitk.GetArrayFromImage(volume)
-print(volume_array.shape)
+# print(volume.GetSize())
+# volume_array = sitk.GetArrayFromImage(volume)
+# print(volume_array.shape)
 
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
