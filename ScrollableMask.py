@@ -26,6 +26,8 @@ rtstruct = RTStructBuilder.create_from(
   rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
 )
 
+
+
 """ The below prints all of the ROI names from the image metadata """
 print(rtstruct.get_roi_names()) 
 

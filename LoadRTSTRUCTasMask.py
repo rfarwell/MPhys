@@ -18,7 +18,7 @@ data set.
 """
 # Load existing RT Struct. Requires the series path and existing RT Struct path
 rtstruct = RTStructBuilder.create_from(
-  dicom_series_path="LUNG1-001/CT/", 
+  dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/CT", 
   rt_struct_path="LUNG1-001/RTSTRUCT/3-2.dcm"
 )
 
