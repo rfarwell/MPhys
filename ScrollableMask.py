@@ -39,7 +39,7 @@ mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right")
 mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
 mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
 mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
-mask_3d = mask_3d_GTV_1
+mask_3d = mask_3d_Lung_Left
 
 
 
@@ -99,12 +99,18 @@ X = sitk.GetImageFromArray(mask_3d)
 print(X.GetSize())
 X = sitk.GetArrayFromImage(X)
 
+
 reader = sitk.ImageSeriesReader() #can hash out to just see mask
 dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT') #can hash out to just see mask
 reader.SetFileNames(dcm_paths) #can hash out to just see mask
 volume = reader.Execute() #can hash out to just see mask
 print(volume.GetSize())
+volume_array = sitk.GetArrayFromImage(volume)
 tracker = IndexTracker(ax, mask_3d, volume)
+
+print('=================================================================')
+print(X.shape)
+print(volume_array.shape)
 
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
