@@ -218,6 +218,5 @@ plt.show()
 #=============================================================================================
 
 #=========================== WRITING THE RESAMPLE MASK ARRAY AS A NIFTI FIL===================
-mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-mask_3d_resampled.astype('uint8')
-sitk.WriteImage(mask_3d_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii")
+sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii")
+sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
