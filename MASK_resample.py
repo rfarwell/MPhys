@@ -59,3 +59,31 @@ rtstruct = RTStructBuilder.create_from(
   dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT", 
   rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
 )
+
+# Getting arrays for all the masks for the determined ROIs
+mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
+mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
+mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
+mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
+
+# Setting what the desired mask is (for the case of a tumour we out GTV-1)
+mask_3d = mask_3d_GTV_1
+
+#Converting this array from boolean to binary
+mask_3d = mask_3d + 1
+mask_3d = mask_3d - 1
+
+mask_3d_image = sitk.GetImageFromArray(mask_3d)
+
+print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
+print('Image size: ' + str(mask_3d_image.GetSize()))
+print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
+
+mask_3d_image_resampled = resample_volume(mask_3d_image)
+
+print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
+print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
+print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
+
+
+
