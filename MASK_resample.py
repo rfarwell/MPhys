@@ -16,7 +16,7 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== RESAMPLING THE DICOM FILE ===========================================
-def resample_volume(volume, interpolator = sitk.sitkLinear) :
+def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
@@ -26,7 +26,7 @@ def resample_volume(volume, interpolator = sitk.sitkLinear) :
     resample.SetOutputDirection(volume.GetDirection())
     resample.SetOutputOrigin(volume.GetOrigin())
     resample.SetSize(new_size)
-    resample.SetOutputSpacing([1, 1, 4])
+    resample.SetOutputSpacing([1, 1, 1])
     resample.SetDefaultPixelValue(-1024)
 
     return resample.Execute(volume)
@@ -40,7 +40,7 @@ reader = sitk.ImageSeriesReader()
 dcm_paths = reader.GetGDCMSeriesFileNames(filepath)
 reader.SetFileNames(dcm_paths)
 DICOM = sitk.ReadImage(dcm_paths)
-DICOM_resampled = resample_volume(DICOM)
+DICOM_resampled = resample_DICOM(DICOM)
 
 print('================ NON-RESAMPLED DICOM DIMENSIONS ============')
 print('Image size: ' + str(DICOM.GetSize()))
@@ -67,11 +67,15 @@ mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
 mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
 
 # Setting what the desired mask is (for the case of a tumour we out GTV-1)
-mask_3d = mask_3d_GTV_1
+mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left
 
 #Converting this array from boolean to binary
 mask_3d = mask_3d + 1
 mask_3d = mask_3d - 1
+
+# Rotating the image to try and fix the axis labels
+# mask_3d = np.rot90(mask_3d, 1, axes = (0,2))
+# print('rotated mask array shape: ' + str(mask_3d.shape))
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
 
@@ -79,15 +83,38 @@ print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
 print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
 
-mask_3d_image_resampled = resample_volume(mask_3d_image)
+def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
+    '''
+    This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
+    '''
+    new_size = [256, 512, 512]
+    resample = sitk.ResampleImageFilter()
+    resample.SetInterpolator(interpolator)
+    resample.SetOutputDirection(volume.GetDirection())
+    resample.SetOutputOrigin(volume.GetOrigin())
+    resample.SetSize(new_size)
+    resample.SetOutputSpacing([1/3, 1/0.9765625, 1/0.9765625])
+    resample.SetDefaultPixelValue(0)
+
+    return resample.Execute(volume)
+
+
+
+mask_3d_image_resampled = resample_MASK(mask_3d_image)
 
 print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
 print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
 print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
 
+print('=============================================================')
+print('mask array shape: ' + str(mask_3d.shape))
+print('mask image shape: ' +str(mask_3d_image.GetSize()))
+
 #================================================================================================
 
 #=========================== PLOTTING RESAMPLED IMAGES ONTO A SCROLLABLE PLOT ===================
+
+
 
 class IndexTracker:
     def __init__(self, ax, X, volume):
@@ -133,9 +160,38 @@ reader = sitk.ImageSeriesReader() #can hash out to just see mask
 dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT') #can hash out to just see mask
 reader.SetFileNames(dcm_paths) #can hash out to just see mask
 volume = reader.Execute() #can hash out to just see mask
-volume = resample_volume(volume)
+volume = resample_DICOM(volume)
 print(volume.GetSize())
 tracker = IndexTracker(ax, mask_3d, volume)
 
+print(volume.GetSize())
+volume_array = sitk.GetArrayFromImage(volume)
+print(volume_array.shape)
+
 fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
+
+mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
+print(mask_3d_resampled.shape)
+
+# numbers = np.arange(mask_3d_resampled.shape[2])
+# slice_numbers = numbers + 1
+# print(slice_numbers)
+
+# true_counter=0
+# for i in (slice_numbers - 1):
+#   true_counter_i = 0
+#   mask_test = mask_3d_resampled[:,:,i]
+#   for row in mask_test:
+#     for cell in row:
+#         #cell = str(cell)
+#         if cell == 1 :
+#           true_counter_i +=1
+#           #print(true_counter_i)
+#           #print("True")
+#   true_counter += true_counter_i
+#   print("The number of True in slice " + str(i+1) + " is " + str(true_counter_i))
+# print(true_counter)
+
+# print(mask_3d_resampled[:,:,23])
+
