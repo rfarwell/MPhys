@@ -23,7 +23,7 @@ def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
-    new_size = [512, 512, 256]
+    new_size = [512, 512, 134]
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
     resample.SetOutputDirection(volume.GetDirection())
@@ -83,6 +83,14 @@ mask_3d = mask_3d - 1
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
 mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
+def permute_axes(volume) :
+    permute = sitk.PermuteAxesImageFilter()
+    permute.SetOrder([2,1,0])
+
+    return permute.Execute(volume)
+
+mask_3d_image = permute_axes(mask_3d_image)
+
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
 print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
@@ -91,7 +99,7 @@ def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
-    new_size = [256, 512, 512]
+    new_size = [134, 512, 512]
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
     resample.SetOutputDirection(volume.GetDirection())
