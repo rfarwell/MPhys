@@ -16,15 +16,17 @@ import os
 reader = sitk.ImageSeriesReader()
 #================================================================================================
 
-#========================== RESAMPLING THE DICOM FILE ===========================================
+#========================== DEFINING RESAMPLING VARIABLES =======================================
 Output_Spacing = [1.0, 1.0, 1.0]
+new_size = [512, 512, 512]
+#================================================================================================
 
+#========================== DEFINING FUNCTIONS ==================================================
 
 def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     '''
-    This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
+    This function resample a volume to size 512 x 512 x 512 with spacing defined from Output_Spacing
     '''
-    new_size = [512, 512, 512]
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
     resample.SetOutputDirection(volume.GetDirection())
@@ -36,6 +38,36 @@ def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
     return resample.Execute(volume)
 
 
+def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
+    '''
+    This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
+    '''
+    print(volume.GetSize())
+    resample = sitk.ResampleImageFilter()
+    resample.SetInterpolator(interpolator)
+    resample.SetOutputDirection(volume.GetDirection())
+    resample.SetOutputOrigin(volume.GetOrigin())
+    resample.SetSize(new_size)
+    #resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
+    resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
+    resample.SetDefaultPixelValue(0)
+
+    return resample.Execute(volume)
+
+
+def permute_axes(volume, permutation_order) :
+    """
+    This function permutes the axes of the input volume.
+    """
+    permute = sitk.PermuteAxesImageFilter()
+    permute.SetOrder(permutation_order)
+
+    return permute.Execute(volume)
+
+
+#================================================================================================
+
+#========================== RESAMPLING THE DICOM FILE ===========================================
 # Directing the code for where to look for the DICOM series and where to output this file to.
 
 filepath = '/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT'
@@ -44,7 +76,7 @@ reader = sitk.ImageSeriesReader()
 dcm_paths = reader.GetGDCMSeriesFileNames(filepath)
 reader.SetFileNames(dcm_paths)
 DICOM = sitk.ReadImage(dcm_paths)
-DICOM_resampled = resample_DICOM(DICOM)
+DICOM_resampled = resample_DICOM(DICOM) #DICOM_resampled is an Image/Object not an array
 
 print('================ NON-RESAMPLED DICOM DIMENSIONS ============')
 print('Image size: ' + str(DICOM.GetSize()))
@@ -74,27 +106,12 @@ mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
 # Setting what the desired mask is (for the case of a tumour we out GTV-1)
 mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left
 
-#Converting this array from boolean to binary
-mask_3d = mask_3d + 1
-mask_3d = mask_3d - 1
-
+#Converting this array from boolean to float so that it can be converted to .nii file
+mask_3d = mask_3d.astype(np.float32)
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
 
 
-def permute_axes(volume) :
-    """
-    This function permutes the axes of the input volume.
-    """
-    permute = sitk.PermuteAxesImageFilter()
-    permute.SetOrder([1,2,0])
-
-    return permute.Execute(volume)
-
-# mask_3d_image = permute_axes(mask_3d_image)
-# mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
-
-mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
@@ -102,36 +119,19 @@ print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
 print('Image direction: ' + str(mask_3d_image.GetDirection()))
 print('Image origin: ' + str(mask_3d_image.GetOrigin()))
 
+mask_3d_image = permute_axes(mask_3d_image, [2,1,0])
+mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
+mask_3d_image.SetDirection(DICOM.GetDirection())
+mask_3d_image.SetOrigin(DICOM.GetOrigin())
+#mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
 # print(mask_3d_image.GetDirection())
 # print(mask_3d_image.GetOrigin())
 
 #mask_3d_image = permute_axes(mask_3d_image)
 
-mask_3d_image.SetDirection(DICOM.GetDirection())
-mask_3d_image.SetOrigin(DICOM.GetOrigin())
-
 # print(mask_3d_image.GetDirection())
 # print(mask_3d_image.GetOrigin())
-
-def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
-    '''
-    This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
-    '''
-    print(volume.GetSize())
-    new_size = [512, 512, 512]
-    resample = sitk.ResampleImageFilter()
-    resample.SetInterpolator(interpolator)
-    resample.SetOutputDirection(volume.GetDirection())
-    resample.SetOutputOrigin(volume.GetOrigin())
-    resample.SetSize(new_size)
-    #resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
-    resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
-    resample.SetDefaultPixelValue(0)
-
-    return resample.Execute(volume)
-
-
 
 mask_3d_image_resampled = resample_MASK(mask_3d_image)
 
@@ -147,48 +147,11 @@ print('Image origin: ' + str(mask_3d_image.GetOrigin()))
 
 #================================================================================================
 
-#=========================== PLOTTING RESAMPLED IMAGES ONTO A SCROLLABLE PLOT ===================
-
-
-
-class IndexTracker:
-    def __init__(self, ax, X, volume):
-        self.ax = ax
-        ax.set_title('use scroll wheel to navigate images')
-
-        self.X = X
-        self.volume = sitk.GetArrayFromImage(volume) #can hash out to just see mask
-        #print(self.volume.shape) #can hash out to just see mask
-        rows, cols, self.slices = X.shape
-        self.ind = self.slices//2
-
-        self.vol = ax.imshow(self.volume[self.ind], cmap = 'gray') #can hash out to just see mask
-        self.im = ax.imshow(self.X[:, :, self.ind], alpha = 0.2)
-        
-        self.update()
-
-        
-    def on_scroll(self, event):
-        print("%s %s" % (event.button, event.step))
-        if event.button == 'up':
-            self.ind = (self.ind + 1) % self.slices
-        else:
-            self.ind = (self.ind - 1) % self.slices
-        self.update()
-
-    def update(self):
-        self.vol.set_data(self.volume[self.ind]) #can hash out to just see mask
-        self.im.set_data(self.X[:, :, self.ind])
-        
-        self.ax.set_ylabel('GTV-1 of slice %s' % (self.ind + 1))
-        self.im.axes.figure.canvas.draw()
-
-fig, ax = plt.subplots(1, 1)
+#=========================== PERFORMING RESAMPLING ===================
 
 #redefining mask_3d_image_resampled to mask_3d (array)
 mask_3d = sitk.GetArrayFromImage(mask_3d_image_resampled)
 X = sitk.GetImageFromArray(mask_3d)
-#print(X.GetSize())
 X = sitk.GetArrayFromImage(X)
 
 reader = sitk.ImageSeriesReader() #can hash out to just see mask
@@ -196,15 +159,15 @@ dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/Universi
 reader.SetFileNames(dcm_paths) #can hash out to just see mask
 volume = reader.Execute() #can hash out to just see mask
 volume = resample_DICOM(volume)
-# print(volume.GetSize())
-tracker = IndexTracker(ax, mask_3d, volume)
 
-# print(volume.GetSize())
-# volume_array = sitk.GetArrayFromImage(volume)
-# print(volume_array.shape)
+#============================================================================================
 
-fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
-plt.show()
+#=========================== WRITING THE RESAMPLED MASK AND DICOM ARRAYS AS A NIFTI FIL===================
+mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
+mask_3d_resampled = mask_3d_resampled.astype(np.float32)
+mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
+sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
+sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
 #============================================================================================
 
 #=========================== COUNTING '1's ==================================================
@@ -233,11 +196,3 @@ plt.show()
 # print(mask_3d_resampled[:,:,23])
 
 #=============================================================================================
-
-#=========================== WRITING THE RESAMPLE MASK ARRAY AS A NIFTI FIL===================
-mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-mask_3d_resampled = mask_3d_resampled.astype(np.float32)
-mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
-sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
-sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
-
