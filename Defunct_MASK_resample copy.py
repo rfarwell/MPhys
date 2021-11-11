@@ -207,6 +207,16 @@ fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
 plt.show()
 #============================================================================================
 
+
+
+#=========================== WRITING THE RESAMPLE MASK ARRAY AS A NIFTI FIL===================
+mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
+mask_3d_resampled = mask_3d_resampled.astype(np.float32)
+mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
+sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
+sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
+#============================================================================================
+
 #=========================== COUNTING '1's ==================================================
 # mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
 # print(mask_3d_resampled.shape)
@@ -233,11 +243,3 @@ plt.show()
 # print(mask_3d_resampled[:,:,23])
 
 #=============================================================================================
-
-#=========================== WRITING THE RESAMPLE MASK ARRAY AS A NIFTI FIL===================
-mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-mask_3d_resampled = mask_3d_resampled.astype(np.float32)
-mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
-sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
-sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
-
