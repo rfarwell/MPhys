@@ -1,5 +1,7 @@
 """
-This code will use the ResampleImageFilter function to resample both the DICOM and Mask for a relevant DICOM series
+This code will use the ResampleImageFilter function to resample both the DICOM and Mask for a 
+relevant DICOM series. Also outputs both the DICOM and masks as .nii files which can be used 
+in 'worldmatch' to check that the mask and CT line up.
 
 Rory Farwell : Last Edited (11/11/2021) (dd/mm/yyyy)
 """
