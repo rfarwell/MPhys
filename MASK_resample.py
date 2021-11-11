@@ -1,5 +1,7 @@
 """
 This code will use the ResampleImageFilter function to resample both the DICOM and Mask for a relevant DICOM series
+
+Rory Farwell : Last Edited (11/11/2021) (dd/mm/yyyy)
 """
 
 #========================== IMPORTING LIBRARIES =================================================
@@ -23,34 +25,34 @@ new_size = [512, 512, 512]
 
 #========================== DEFINING FUNCTIONS ==================================================
 
-def resample_DICOM(volume, interpolator = sitk.sitkLinear) :
+def resample_DICOM(volume, interpolator = sitk.sitkLinear, default_pixel_value = -1024) :
     '''
     This function resample a volume to size 512 x 512 x 512 with spacing defined from Output_Spacing
     '''
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
-    resample.SetOutputDirection(volume.GetDirection())
-    resample.SetOutputOrigin(volume.GetOrigin())
+    resample.SetOutputDirection(DICOM.GetDirection())
+    resample.SetOutputOrigin(DICOM.GetOrigin())
     resample.SetSize(new_size)
     resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
-    resample.SetDefaultPixelValue(-1024)
+    resample.SetDefaultPixelValue(default_pixel_value)
 
     return resample.Execute(volume)
 
 
-def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor) :
+def resample_MASK(volume, interpolator = sitk.sitkNearestNeighbor, default_pixel_value = 0) :
     '''
     This function resample a volume to size 512 x 512 x 256 with spacing 1 x 1 x 4 (Good for our dataset)
     '''
     print(volume.GetSize())
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
-    resample.SetOutputDirection(volume.GetDirection())
-    resample.SetOutputOrigin(volume.GetOrigin())
+    resample.SetOutputDirection(DICOM.GetDirection())
+    resample.SetOutputOrigin(DICOM.GetOrigin())
     resample.SetSize(new_size)
     #resample.SetOutputSpacing([Output_Spacing[2], Output_Spacing[1], Output_Spacing[0]])
     resample.SetOutputSpacing([Output_Spacing[0], Output_Spacing[1], Output_Spacing[2]])
-    resample.SetDefaultPixelValue(0)
+    resample.SetDefaultPixelValue(default_pixel_value)
 
     return resample.Execute(volume)
 
@@ -113,8 +115,6 @@ mask_3d = mask_3d.astype(np.float32)
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
 
-
-
 print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
 print('Image size: ' + str(mask_3d_image.GetSize()))
 print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
@@ -122,20 +122,11 @@ print('Image direction: ' + str(mask_3d_image.GetDirection()))
 print('Image origin: ' + str(mask_3d_image.GetOrigin()))
 
 mask_3d_image = permute_axes(mask_3d_image, [1,2,0])
-mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
+mask_3d_image.SetSpacing(DICOM.GetSpacing())
 mask_3d_image.SetDirection(DICOM.GetDirection())
 mask_3d_image.SetOrigin(DICOM.GetOrigin())
-#mask_3d_image.SetSpacing([DICOM.GetSpacing()[2], DICOM.GetSpacing()[1], DICOM.GetSpacing()[0]])
 
-# print(mask_3d_image.GetDirection())
-# print(mask_3d_image.GetOrigin())
-
-#mask_3d_image = permute_axes(mask_3d_image)
-
-# print(mask_3d_image.GetDirection())
-# print(mask_3d_image.GetOrigin())
-
-mask_3d_image_resampled = resample_MASK(mask_3d_image)
+mask_3d_image_resampled = resample_MASK(mask_3d_image, sitk.sitkNearestNeighbor, 0)
 
 print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
 print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
@@ -143,58 +134,15 @@ print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
 print('Image direction: ' + str(mask_3d_image_resampled.GetDirection()))
 print('Image origin: ' + str(mask_3d_image_resampled.GetOrigin()))
 
-# print('=============================================================')
-# print('mask array shape: ' + str(mask_3d.shape))
-# print('mask image shape: ' +str(mask_3d_image.GetSize()))
-
 #================================================================================================
 
-#=========================== PERFORMING RESAMPLING ===================
-
-#redefining mask_3d_image_resampled to mask_3d (array)
-mask_3d = sitk.GetArrayFromImage(mask_3d_image_resampled)
-X = sitk.GetImageFromArray(mask_3d)
-X = sitk.GetArrayFromImage(X)
-
-reader = sitk.ImageSeriesReader() #can hash out to just see mask
-dcm_paths = reader.GetGDCMSeriesFileNames('/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT') #can hash out to just see mask
-reader.SetFileNames(dcm_paths) #can hash out to just see mask
-volume = reader.Execute() #can hash out to just see mask
-volume = resample_DICOM(volume)
-
-#============================================================================================
-
-#=========================== WRITING THE RESAMPLED MASK AND DICOM ARRAYS AS A NIFTI FIL===================
+#=========================== WRITING THE RESAMPLED MASK AND DICOM ARRAYS AS A NIFTI FILE ===================
 mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
 mask_3d_resampled = mask_3d_resampled.astype(np.float32)
 mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
+mask_3d_image_resampled.SetDirection(DICOM.GetDirection())
+mask_3d_image_resampled.SetOrigin(DICOM.GetOrigin())
+print(mask_3d_image_resampled.GetOrigin())
 sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
 sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
 #============================================================================================
-
-#=========================== COUNTING '1's ==================================================
-# mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-# print(mask_3d_resampled.shape)
-
-# numbers = np.arange(mask_3d_resampled.shape[2])
-# slice_numbers = numbers + 1
-# print(slice_numbers)
-
-# true_counter=0
-# for i in (slice_numbers - 1):
-#   true_counter_i = 0
-#   mask_test = mask_3d_resampled[:,:,i]
-#   for row in mask_test:
-#     for cell in row:
-#         #cell = str(cell)
-#         if cell == 1 :
-#           true_counter_i +=1
-#           #print(true_counter_i)
-#           #print("True")
-#   true_counter += true_counter_i
-#   print("The number of True in slice " + str(i+1) + " is " + str(true_counter_i))
-# print(true_counter)
-
-# print(mask_3d_resampled[:,:,23])
-
-#=============================================================================================
