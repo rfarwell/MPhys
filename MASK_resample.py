@@ -17,7 +17,7 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== DEFINING RESAMPLING VARIABLES =======================================
-Output_Spacing = [1.0, 1.0, 1.0]
+Output_Spacing = [1, 1, 1]
 new_size = [512, 512, 512]
 #================================================================================================
 
@@ -81,12 +81,14 @@ DICOM_resampled = resample_DICOM(DICOM) #DICOM_resampled is an Image/Object not 
 print('================ NON-RESAMPLED DICOM DIMENSIONS ============')
 print('Image size: ' + str(DICOM.GetSize()))
 print('Image spacing: ' + str(DICOM.GetSpacing()))
-
+print('Image direction: ' + str(DICOM.GetDirection()))
+print('Image origin: ' + str(DICOM.GetOrigin()))
 
 print('================ RESAMPLED DICOM DIMENSIONS ================')
 print('Image size: ' + str(DICOM_resampled.GetSize()))
 print('Image spacing: ' + str(DICOM_resampled.GetSpacing()))
-
+print('Image direction: ' + str(DICOM_resampled.GetDirection()))
+print('Image origin: ' + str(DICOM_resampled.GetOrigin()))
 #===============================================================================================
 
 #=========================== RESAMPLING THE MASK ===============================================
@@ -119,7 +121,7 @@ print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
 print('Image direction: ' + str(mask_3d_image.GetDirection()))
 print('Image origin: ' + str(mask_3d_image.GetOrigin()))
 
-mask_3d_image = permute_axes(mask_3d_image, [2,1,0])
+mask_3d_image = permute_axes(mask_3d_image, [1,2,0])
 mask_3d_image.SetSpacing([DICOM.GetSpacing()[0], DICOM.GetSpacing()[1], DICOM.GetSpacing()[2]])
 mask_3d_image.SetDirection(DICOM.GetDirection())
 mask_3d_image.SetOrigin(DICOM.GetOrigin())
@@ -138,8 +140,8 @@ mask_3d_image_resampled = resample_MASK(mask_3d_image)
 print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
 print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
 print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
-print('Image direction: ' + str(mask_3d_image.GetDirection()))
-print('Image origin: ' + str(mask_3d_image.GetOrigin()))
+print('Image direction: ' + str(mask_3d_image_resampled.GetDirection()))
+print('Image origin: ' + str(mask_3d_image_resampled.GetOrigin()))
 
 # print('=============================================================')
 # print('mask array shape: ' + str(mask_3d.shape))
