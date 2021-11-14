@@ -77,7 +77,6 @@ def resample_DICOM(interpolator = sitk.sitkLinear, default_pixel_value = -1024) 
     Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
     """
     global DICOM #Means that DICOM will be defined globally
-
     reader = sitk.ImageSeriesReader()
     DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
     reader.SetFileNames(DICOM_paths)
@@ -93,7 +92,6 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
 
     Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
     """
-
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
 
     # Getting arrays for all the masks for the determined ROIs
@@ -120,8 +118,8 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
 #================================================================================================
 
 #========================== FINAL CODE ==========================================================
-mask_3d_image_resampled = resample_MASK()
 DICOM_resampled = resample_DICOM()
+mask_3d_image_resampled = resample_MASK()
 sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
 sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
 print("Finished writing files.")
