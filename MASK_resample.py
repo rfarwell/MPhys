@@ -82,19 +82,6 @@ reader.SetFileNames(dcm_paths)
 DICOM = sitk.ReadImage(dcm_paths)
 DICOM_resampled = resample_DICOM(DICOM) #DICOM_resampled is an Image/Object not an array
 
-# print('================ NON-RESAMPLED DICOM DIMENSIONS ============')
-# print('Image size: ' + str(DICOM.GetSize()))
-# print('Image spacing: ' + str(DICOM.GetSpacing()))
-# print('Image direction: ' + str(DICOM.GetDirection()))
-# print('Image origin: ' + str(DICOM.GetOrigin()))
-
-# print('================ RESAMPLED DICOM DIMENSIONS ================')
-# print('Image size: ' + str(DICOM_resampled.GetSize()))
-# print('Image spacing: ' + str(DICOM_resampled.GetSpacing()))
-# print('Image direction: ' + str(DICOM_resampled.GetDirection()))
-# print('Image origin: ' + str(DICOM_resampled.GetOrigin()))
-#===============================================================================================
-
 #=========================== RESAMPLING THE MASK ===============================================
 
 # Telling the code where to get the DICOMs and RTSTRUCT from
@@ -117,24 +104,12 @@ mask_3d = mask_3d.astype(np.float32)
 
 mask_3d_image = sitk.GetImageFromArray(mask_3d)
 
-# print('================ NON-RESAMPLED RTSTRUCT DIMENSIONS ==========')
-# print('Image size: ' + str(mask_3d_image.GetSize()))
-# print('Image spacing: ' + str(mask_3d_image.GetSpacing()))
-# print('Image direction: ' + str(mask_3d_image.GetDirection()))
-# print('Image origin: ' + str(mask_3d_image.GetOrigin()))
-
 mask_3d_image = permute_axes(mask_3d_image, [1,2,0])
 mask_3d_image.SetSpacing(DICOM.GetSpacing())
 mask_3d_image.SetDirection(DICOM.GetDirection())
 mask_3d_image.SetOrigin(DICOM.GetOrigin())
 
 mask_3d_image_resampled = resample_MASK(mask_3d_image, sitk.sitkNearestNeighbor, 0)
-
-# print('================ RESAMPLED RTSTRUCT DIMENSIONS ==============')
-# print('Image size: ' + str(mask_3d_image_resampled.GetSize()))
-# print('Image spacing: ' + str(mask_3d_image_resampled.GetSpacing()))
-# print('Image direction: ' + str(mask_3d_image_resampled.GetDirection()))
-# print('Image origin: ' + str(mask_3d_image_resampled.GetOrigin()))
 
 #================================================================================================
 
@@ -149,6 +124,7 @@ sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/Universit
 sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
 #============================================================================================
 
+#======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
 number_of_iterations = 422
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
