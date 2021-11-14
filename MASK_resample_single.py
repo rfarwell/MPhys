@@ -95,6 +95,7 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
 
     # Getting arrays for all the masks for the determined ROIs
+    #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check
     mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
     mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
     mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
