@@ -76,7 +76,7 @@ def resample_DICOM(interpolator = sitk.sitkLinear, default_pixel_value = -1024) 
 
     Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
     """
-    
+    global DICOM #Means that DICOM will be defined globally
 
     reader = sitk.ImageSeriesReader()
     DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
@@ -120,17 +120,8 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
 #================================================================================================
 
 #========================== FINAL CODE ==========================================================
-
-# Globally defining DICOM. Want to come up with a neater way of doing this.
-reader = sitk.ImageSeriesReader()
-DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
-reader.SetFileNames(DICOM_paths)
-DICOM = sitk.ReadImage(DICOM_paths)
-
 mask_3d_image_resampled = resample_MASK()
 DICOM_resampled = resample_DICOM()
-
-
 sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
 sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
 print("Finished writing files.")
