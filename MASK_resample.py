@@ -68,61 +68,7 @@ def permute_axes(volume, permutation_order) :
 
     return permute.Execute(volume)
 
-
 #================================================================================================
-
-#========================== RESAMPLING THE DICOM FILE ===========================================
-# Directing the code for where to look for the DICOM series and where to output this file to.
-
-filepath = '/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT'
-
-reader = sitk.ImageSeriesReader()
-dcm_paths = reader.GetGDCMSeriesFileNames(filepath)
-reader.SetFileNames(dcm_paths)
-DICOM = sitk.ReadImage(dcm_paths)
-DICOM_resampled = resample_DICOM(DICOM) #DICOM_resampled is an Image/Object not an array
-
-#=========================== RESAMPLING THE MASK ===============================================
-
-# Telling the code where to get the DICOMs and RTSTRUCT from
-rtstruct = RTStructBuilder.create_from(
-  dicom_series_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT", 
-  rt_struct_path="/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
-)
-
-# Getting arrays for all the masks for the determined ROIs
-mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
-mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
-mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
-mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
-
-# Setting what the desired mask is (for the case of a tumour we out GTV-1)
-mask_3d = mask_3d_Lung_Right + mask_3d_Lung_Left
-
-#Converting this array from boolean to float so that it can be converted to .nii file
-mask_3d = mask_3d.astype(np.float32)
-
-mask_3d_image = sitk.GetImageFromArray(mask_3d)
-
-mask_3d_image = permute_axes(mask_3d_image, [1,2,0])
-mask_3d_image.SetSpacing(DICOM.GetSpacing())
-mask_3d_image.SetDirection(DICOM.GetDirection())
-mask_3d_image.SetOrigin(DICOM.GetOrigin())
-
-mask_3d_image_resampled = resample_MASK(mask_3d_image, sitk.sitkNearestNeighbor, 0)
-
-#================================================================================================
-
-#=========================== WRITING THE RESAMPLED MASK AND DICOM ARRAYS AS A NIFTI FILE ===================
-mask_3d_resampled = sitk.GetArrayFromImage(mask_3d_image_resampled)
-mask_3d_resampled = mask_3d_resampled.astype(np.float32)
-mask_3d_image_resampled = sitk.GetImageFromArray(mask_3d_resampled)
-mask_3d_image_resampled.SetDirection(DICOM.GetDirection())
-mask_3d_image_resampled.SetOrigin(DICOM.GetOrigin())
-print(mask_3d_image_resampled.GetOrigin())
-sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
-sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
-#============================================================================================
 
 #======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
 number_of_iterations = 422
@@ -152,6 +98,8 @@ for i in filenumbers :
     dicom_series_path= CT_read_path, 
     rt_struct_path= RTSTRUCT_read_path
     )
+
+    print(str(i) + ": " + str(rtstruct.get_roi_names())) # View all of the ROI names from within the image
 
     mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
     mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
