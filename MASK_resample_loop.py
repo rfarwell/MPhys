@@ -87,14 +87,14 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     """
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
     
-    print(str(i) + rtstruct.get_roi_names()) # View all of the ROI names from within the image
+    print(str(i) + ': ' + str(rtstruct.get_roi_names())) # View all of the ROI names from within the image
 
     #Getting arrays for all the masks for the determined ROIs
     #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check.
     mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
     mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
-    mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
-    mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
+    # mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
+    # mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
 
     mask_3d = mask_3d_Lung_Left + mask_3d_Lung_Right
     
@@ -129,13 +129,23 @@ for i in filenumbers :
     
     DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-CT.nii'
     MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT.nii'
+    
+    
+    try :
+        DICOM_resampled = resample_DICOM()
+        sitk.WriteImage(DICOM_resampled, DICOM_write_path)
+        print('Completeted writing .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
+        # print("===========================================================================")
+    except :
+        print('Failed to write .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
+    
+    try : 
+        mask_3d_image_resampled = resample_MASK()
+        sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
+        print('Completeted writing .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+    except :
+        print('Failed to write .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
 
-    DICOM_resampled = resample_DICOM()
-    mask_3d_image_resampled = resample_MASK()
-    sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
-    sitk.WriteImage(DICOM_resampled, DICOM_write_path)
 
-    print('Completeted writing .nii files for CT and RTSTRUCT for file ' + str(i) + '.')
-    print("===========================================================================")
 
 
