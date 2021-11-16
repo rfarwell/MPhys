@@ -41,11 +41,17 @@ new_size = [512, 512, 512]
 #================================================================================================
 
 #========================== DEFINING PATHS ======================================================
-DICOM_series_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT"
-RTSTRUCT_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
+# DICOM_series_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT"
+# RTSTRUCT_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
 
-DICOM_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii"
-RTSTRUCT_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii"
+# DICOM_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii"
+# RTSTRUCT_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii"
+
+DICOM_series_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-003/-CT"
+RTSTRUCT_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-003/RTSTRUCT/4-2.dcm"
+
+DICOM_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-003/resampled/LUNG1-003-CT-resampled.nii"
+RTSTRUCT_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-003/resampled/LUNG1-003-MASK-resampled-GTV23.nii"
 #================================================================================================
 
 
@@ -118,10 +124,12 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
     mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
     mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
+    mask_3d_gtv_2 = rtstruct.get_roi_mask_by_name("gtv-2")
+    mask_3d_gtv_3 = rtstruct.get_roi_mask_by_name("gtv-3")
 
     
 
-    mask_3d = mask_3d_Lung_Left + mask_3d_Lung_Right
+    mask_3d = mask_3d_gtv_2 + mask_3d_gtv_3
     
     mask_3d = mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
 
