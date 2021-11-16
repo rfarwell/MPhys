@@ -201,14 +201,11 @@ def get_filenumbers() :
 
 #======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
 
-# filenumbers_tested = get_filenumbers()
-# print(filenumbers_tested)
-# print(len(filenumbers_tested))
-# print('=================================================================================')
-
-filenumbers_tested = np.arange(5)
-filenumbers_tested = filenumbers_tested + 1
+filenumbers_tested = get_filenumbers()
 print(filenumbers_tested)
+print(len(filenumbers_tested))
+print('=================================================================================')
+
 
 for i in filenumbers_tested :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
