@@ -130,7 +130,13 @@ for i in filenumbers :
     DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-CT.nii'
     MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT.nii'
     
-    
+    try : 
+        mask_3d_image_resampled = resample_MASK()
+        sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
+        print('Completeted writing .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+    except :
+        print('Failed to write .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+
     try :
         DICOM_resampled = resample_DICOM()
         sitk.WriteImage(DICOM_resampled, DICOM_write_path)
@@ -139,12 +145,7 @@ for i in filenumbers :
     except :
         print('Failed to write .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
     
-    try : 
-        mask_3d_image_resampled = resample_MASK()
-        sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
-        print('Completeted writing .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    except :
-        print('Failed to write .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+
 
 
 
