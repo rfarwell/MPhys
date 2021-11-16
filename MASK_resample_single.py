@@ -27,13 +27,11 @@ reader = sitk.ImageSeriesReader()
 
 #========================== DEFINING RESAMPLING VARIABLES =======================================
 """
-In this sub-section the user, by editing the code below, can choose what the spacing and size of
+- In this sub-section the user, by editing the code below, can choose what the spacing and size of
 the resampled mask and CT series will be.
-
-Both the CT series and mask will be resampled to the same parameters so that they line up when
+- Both the CT series and mask will be resampled to the same parameters so that they line up when
 plotted in a proramme such as WorldMatch.
-
-If needs be, this code could be easily edited to allow different resampling sizes and spacings. 
+- If needs be, this code could be easily edited to allow different resampling sizes and spacings. 
 
 Patrick Hastings and Rory Farwell (16/11/2021)
 """
@@ -51,14 +49,13 @@ RTSTRUCT_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUN
 #========================== DEFINING FUNCTIONS ==================================================
 def resample_volume(volume, interpolator, default_pixel_value) :
     '''
-    This function resample a volume to size 512 x 512 x 512 with spacing 1 x 1 x 1 (need to test different
-    sizes and spacings for our dataset).
+    This function resample a volume to size 512 x 512 x 512 with spacing 1 x 1 x 1.
 
-    This function will be used in the resampling functions for both the DICOM series and the mask images.
+    It will be used in the resampling functions for both the DICOM series and the mask images.
     To ensure they overlap well when put into a program such as Worldmatch the direction and origin of both
     resampled volumes are set to the direction and origin of the original DICOM series.
 
-    Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
+    Rory Farwell and Patrick Hastings (14/11/2021)
     '''
     resample = sitk.ResampleImageFilter()
     resample.SetInterpolator(interpolator)
@@ -89,7 +86,7 @@ def resample_DICOM(interpolator = sitk.sitkLinear, default_pixel_value = -1024) 
     This function will do the whole resampling process on the DICOM series and will make use
     of the earlier defined resample_volume function.
 
-    Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
+    Rory Farwell and Patrick Hastings (14/11/2021)
     """
     global DICOM #Means that DICOM will be defined globally
     reader = sitk.ImageSeriesReader()
@@ -105,16 +102,21 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     This function will perform the whole resampling process on a mask produced from an RTSTRUCT
     file and will make use of the earlier defined resample_volume function.
 
-    Rory Farwell and Patrick Hastings (14/11/2021) (dd/mm/yyyy)
+    Rory Farwell and Patrick Hastings (14/11/2021)
     """
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
+    
+    #Unhash the line below to print the ROI names for the chosen RTSTRUCT file.
+    # print(rtstruct.get_roi_names())
 
-    # Getting arrays for all the masks for the determined ROIs
-    #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check
+    #Getting arrays for all the masks for the determined ROIs
+    #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check.
     mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
     mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
     mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
     mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
+
+    
 
     mask_3d = mask_3d_Lung_Left + mask_3d_Lung_Right
     
