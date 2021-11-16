@@ -70,13 +70,13 @@ def resample_DICOM(interpolator = sitk.sitkLinear, default_pixel_value = -1024) 
     Rory Farwell and Patrick Hastings (14/11/2021)
     """
     global DICOM #Means that DICOM will be defined globally
-    reader = sitk.ImageSeriesReader()
     DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
     reader.SetFileNames(DICOM_paths)
     DICOM = sitk.ReadImage(DICOM_paths)
-    DICOM_resampled = resample_volume(DICOM, interpolator, default_pixel_value) #DICOM_resampled is an Image/Object not an array
+    """DICOM_resampled = resample_volume(DICOM, interpolator, default_pixel_value) #DICOM_resampled is an Image/Object not an array
 
-    return DICOM_resampled
+    return DICOM_resampled"""
+    return DICOM
 
 def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value = 0, Regions_of_Interest = ["Lung-Right", "Lung-Left"]) :
     """
@@ -87,8 +87,8 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     """
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
     
-    print(str(i) + ': ' + str(rtstruct.get_roi_names())) # View all of the ROI names from within the image
-
+    # print(str(i) + ': ' + str(rtstruct.get_roi_names())) # View all of the ROI names from within the image
+    
     #Getting arrays for all the masks for the determined ROIs
     #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check.
     mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
@@ -110,7 +110,7 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
     mask_3d_image_resampled = resample_volume(mask_3d_image, interpolator, default_pixel_value)
 
     return mask_3d_image_resampled
-
+    
 #================================================================================================
 
 #======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
@@ -119,34 +119,61 @@ filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
 
 filepath = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted'
-
+filenumbers_tested = []
+counter = 0
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
     RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
     files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
     RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
     RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
-    
-    DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-CT.nii'
-    MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT.nii'
-    
-    try : 
-        mask_3d_image_resampled = resample_MASK()
-        sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
-        print('Completeted writing .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    except :
-        print('Failed to write .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-
+    counter += 1
+    print(counter)
     try :
-        DICOM_resampled = resample_DICOM()
-        sitk.WriteImage(DICOM_resampled, DICOM_write_path)
-        print('Completeted writing .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
-        # print("===========================================================================")
+        """
+        Try to read both the RTSTRUCT and DICOM series.
+        """
+        rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path)
+        DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
+        reader.SetFileNames(DICOM_paths)
+        DICOM = sitk.ReadImage(DICOM_paths)
+        filenumbers_tested.append(i)
+
+
     except :
-        print('Failed to write .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
+        """
+        If unable to read in both RTSTRUCT and DICOM series.
+        """
+        print("Unable to read either the DICOM series or the RTSTRUCT for LUNG1-" + str('{0:03}'.format(i)) + ".")
+
+print(filenumbers)
+print(filenumbers_tested)
+print("==================")
+print(len(filenumbers))
+print(len(filenumbers_tested))
+
+# for i in filenumbers :
+#     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
+#     RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
+#     files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
+#     RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
+#     RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
     
+#     DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-CT.nii'
+#     MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT.nii'
+    
+#     try : 
+#         mask_3d_image_resampled = resample_MASK()
+#         # sitk.WriteImage(mask_3d_image_resampled, MASK_write_path)
+#         # print('Completeted writing .nii file for MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+#     except :
+#         print('!!!!!!!!!!!!!!!!!!!!!!! Failed to read RTSTRUCT for LUNG1-' + str('{0:03}'.format(i)) + '.')
 
-
-
-
-
+#     try :
+#         DICOM = resample_DICOM()
+#         # DICOM_resampled = resample_DICOM()
+#         # sitk.WriteImage(DICOM_resampled, DICOM_write_path)
+#         # print('Completeted writing .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
+#         # print("===========================================================================")
+#     except :
+#         print(('!!!!!!!!!!!!!!!!!!!!!!! Failed to read CT for LUNG1-' + str('{0:03}'.format(i)) + '.'))
