@@ -62,7 +62,10 @@ def resample_volume(volume, interpolator, default_pixel_value) :
 def permute_axes(volume, permutation_order) :
     """
     This function permutes the axes of the input volume.
-    It will be used on the 
+    It will be used on the mask because SimpleITK seems to flip the axes
+    at some stage in this process.
+
+    Patrick Hastings and Rory Farwell (16/11/2021) 
     """
     permute = sitk.PermuteAxesImageFilter()
     permute.SetOrder(permutation_order)
