@@ -152,7 +152,7 @@ print("==================")
 print(len(filenumbers))
 print(len(filenumbers_tested))
 
-# for i in filenumbers :
+# for i in filenumbers_tested :
 #     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
 #     RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
 #     files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
