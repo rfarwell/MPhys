@@ -26,6 +26,18 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== DEFINING RESAMPLING VARIABLES =======================================
+"""
+In this sub-section the user, by editing the code below, can choose what the spacing and size of
+the resampled mask and CT series will be.
+
+Both the CT series and mask will be resampled to the same parameters so that they line up when
+plotted in a proramme such as WorldMatch.
+
+If needs be, this code could be easily edited to allow different resampling sizes and spacings. 
+
+Patrick Hastings and Rory Farwell (16/11/2021)
+"""
+
 Output_Spacing = [1, 1, 1]
 new_size = [512, 512, 512]
 #================================================================================================
