@@ -43,6 +43,9 @@ new_size = [512, 512, 512]
 #========================== DEFINING PATHS ======================================================
 DICOM_series_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/-CT"
 RTSTRUCT_path = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/RTSTRUCT/3-2.dcm"
+
+DICOM_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii"
+RTSTRUCT_write_destination = "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled.nii"
 #================================================================================================
 
 
@@ -138,8 +141,8 @@ def resample_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value =
 #========================== FINAL CODE ==========================================================
 DICOM_resampled = resample_DICOM()
 mask_3d_image_resampled = resample_MASK()
-sitk.WriteImage(mask_3d_image_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-MASK-resampled32bit.nii")
-sitk.WriteImage(DICOM_resampled, "/Users/roryfarwell/Documents/University/Year4/MPhys/DataOrg/LUNG1-001/resampled/LUNG1-001-DICOM-resampled.nii")
+sitk.WriteImage(mask_3d_image_resampled, RTSTRUCT_write_destination)
+sitk.WriteImage(DICOM_resampled, DICOM_write_destination)
 print("Finished writing files.")
 #================================================================================================
 
