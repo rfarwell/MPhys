@@ -122,7 +122,7 @@ def resample_ALL_GTV_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel
     
     #Getting arrays for all the masks for the determined ROIs
     #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check.
-    mask_3d = np.zeros([512,512,134], dtype = bool)
+    mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
 
     ROIs = rtstruct.get_roi_names()
 
@@ -225,14 +225,23 @@ for i in filenumbers_tested :
     DICOM_resampled = resample_DICOM()
     sitk.WriteImage(DICOM_resampled, DICOM_write_path)
     print('Completeted writing .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
+    print(DICOM_resampled.GetSize())
+    print(DICOM_resampled.GetDirection())
+    print(DICOM_resampled.GetOrigin())
 
     GTV_1_mask_3d_image_resampled = resample_GTV_1_MASK()
     sitk.WriteImage(GTV_1_mask_3d_image_resampled, GTV_1_MASK_write_path)
     print('Completeted writing .nii file for GTV-1 MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
+    print(GTV_1_mask_3d_image_resampled.GetSize())
+    print(GTV_1_mask_3d_image_resampled.GetDirection())
+    print(GTV_1_mask_3d_image_resampled.GetOrigin())
+
 
     ALL_GTV_mask_3d_image_resampled = resample_ALL_GTV_MASK()
     sitk.WriteImage(ALL_GTV_mask_3d_image_resampled, ALL_GTV_MASK_write_path)
     print('Completeted writing .nii file for ALL GTV MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    
+    print(ALL_GTV_mask_3d_image_resampled.GetSize())
+    print(ALL_GTV_mask_3d_image_resampled.GetDirection())
+    print(ALL_GTV_mask_3d_image_resampled.GetOrigin())
 
     print("===========================================================================")
