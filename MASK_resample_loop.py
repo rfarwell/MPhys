@@ -145,53 +145,63 @@ def resample_ALL_GTV_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel
 
     return mask_3d_image_resampled
 
+def get_filenumbers() :
+    """
+    This function runs through all the files and tests whether both the DICOM and RTSTRUCT files can be opened.
+    If they can then they are removed from the 'filenumbers_tested' list which will be used for when creating
+    .nii files of both the masks and the DICOM series.
 
+    Patrick Hastings and Rory Farwell (16/11/2021)
+    """
+    number_of_iterations = 422
+    filenumbers = np.arange(number_of_iterations)
+    filenumbers = filenumbers + 1
+
+    filenumbers_tested = filenumbers
+    counter = 0
+
+    for i in filenumbers :
+        DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
+        RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
+        files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
+        RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
+        RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
+        counter += 1
+        if counter%10 == 0 :
+            print(counter)
+    
+            try :
+                """
+                Try to read both the RTSTRUCT and DICOM series.
+                """
+                rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path)
+                DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
+                reader.SetFileNames(DICOM_paths)
+                DICOM = sitk.ReadImage(DICOM_paths)
+        
+                ROIs = rtstruct.get_roi_names()
+                for ROI in ROIs :
+                    str(ROI)
+                    if "pre-op" in ROI :
+                        filenumbers_tested.remove(i)
+                        
+            except :
+                """
+                If unable to read in both RTSTRUCT and DICOM series.
+                """
+                filenumbers_tested.remove(i)
+                print("Unable to read either the DICOM series or the RTSTRUCT for LUNG1-" + str('{0:03}'.format(i)) + ".")
+
+    print(filenumbers_tested)
+    print(len(filenumbers_tested))
+    
+    return filenumbers_tested
 
 #================================================================================================
 
 #======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
-number_of_iterations = 422
-filenumbers = np.arange(number_of_iterations)
-filenumbers = filenumbers + 1
 
-filepath = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted'
-filenumbers_tested = filenumbers
-counter = 0
-for i in filenumbers :
-    DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
-    RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
-    files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
-    RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
-    RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
-    counter += 1
-    if counter%10 == 0 :
-        print(counter)
-    
-    try :
-        """
-        Try to read both the RTSTRUCT and DICOM series.
-        """
-        rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path)
-        DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
-        reader.SetFileNames(DICOM_paths)
-        DICOM = sitk.ReadImage(DICOM_paths)
-        
-
-        ROIs = rtstruct.get_roi_names()
-        for ROI in ROIs :
-            str(ROI)
-            if "pre-op" in ROI :
-                filenumbers_tested.remove(i)
-    except :
-        """
-        If unable to read in both RTSTRUCT and DICOM series.
-        """
-        filenumbers_tested.remove(i)
-        print("Unable to read either the DICOM series or the RTSTRUCT for LUNG1-" + str('{0:03}'.format(i)) + ".")
-
-print(filenumbers_tested)
-print(len(filenumbers_tested))
-
+filenumbers_tested = get_filenumbers()
 print('=================================================================================')
 
 for i in filenumbers_tested :
