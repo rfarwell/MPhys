@@ -126,10 +126,14 @@ def resample_ALL_GTV_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel
 
     ROIs = rtstruct.get_roi_names()
 
+    print(ROIs) #Printing to check the for loop below is doing the right thing.
+
     for ROI in ROIs :
         mask_3d_temp = rtstruct.get_roi_mask_by_name(str(ROI))
-        if "GTV" or "gtv" in ROI :
+        if "GTV" in ROI or "gtv" in ROI :
             mask_3d = mask_3d + mask_3d_temp
+            print(ROI)
+    
 
     
     mask_3d = mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
@@ -201,17 +205,20 @@ def get_filenumbers() :
 
 #======================== LOOPING THROUGH ALL EXTERNALLY STORED CT AND RTSTRUCT FILES =======
 
-filenumbers_tested = get_filenumbers()
-print(filenumbers_tested)
-print(len(filenumbers_tested))
-print('=================================================================================')
+# filenumbers_tested = get_filenumbers()
+# print(filenumbers_tested)
+# print(len(filenumbers_tested))
+# print('=================================================================================')
 
+filenumbers_tested = np.arange(10)
+filenumbers_tested = filenumbers_tested + 1
 
 for i in filenumbers_tested :
-    DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
-    RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
-    files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
-    RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
+    DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i))
+    RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i))
+    files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)))
+    RTSTRUCT_filename = files_in_RTSTRUCT_folder[0]
+    RTSTRUCT_read_filename = str(RTSTRUCT_filename)
     RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
 
     
@@ -222,23 +229,23 @@ for i in filenumbers_tested :
     DICOM_resampled = resample_DICOM()
     sitk.WriteImage(DICOM_resampled, DICOM_write_path)
     print('Completeted writing .nii file for CT for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    # print(DICOM_resampled.GetSize())
-    # print(DICOM_resampled.GetDirection())
-    # print(DICOM_resampled.GetOrigin())
+    print(DICOM_resampled.GetSize())
+    print(DICOM_resampled.GetDirection())
+    print(DICOM_resampled.GetOrigin())
 
     GTV_1_mask_3d_image_resampled = resample_GTV_1_MASK()
     sitk.WriteImage(GTV_1_mask_3d_image_resampled, GTV_1_MASK_write_path)
     print('Completeted writing .nii file for GTV-1 MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    # print(GTV_1_mask_3d_image_resampled.GetSize())
-    # print(GTV_1_mask_3d_image_resampled.GetDirection())
-    # print(GTV_1_mask_3d_image_resampled.GetOrigin())
+    print(GTV_1_mask_3d_image_resampled.GetSize())
+    print(GTV_1_mask_3d_image_resampled.GetDirection())
+    print(GTV_1_mask_3d_image_resampled.GetOrigin())
 
 
     ALL_GTV_mask_3d_image_resampled = resample_ALL_GTV_MASK()
     sitk.WriteImage(ALL_GTV_mask_3d_image_resampled, ALL_GTV_MASK_write_path)
     print('Completeted writing .nii file for ALL GTV MASK for LUNG1-' + str('{0:03}'.format(i)) + '.')
-    # print(ALL_GTV_mask_3d_image_resampled.GetSize())
-    # print(ALL_GTV_mask_3d_image_resampled.GetDirection())
-    # print(ALL_GTV_mask_3d_image_resampled.GetOrigin())
+    print(ALL_GTV_mask_3d_image_resampled.GetSize())
+    print(ALL_GTV_mask_3d_image_resampled.GetDirection())
+    print(ALL_GTV_mask_3d_image_resampled.GetOrigin())
 
     print("===========================================================================")
