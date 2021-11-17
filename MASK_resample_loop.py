@@ -165,9 +165,9 @@ def get_filenumbers() :
     counter = 0
 
     for i in filenumbers :
-        DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CTUnknownStudyID'
-        RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID'
-        files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCTUnknownStudyID')
+        DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-CT'
+        RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT'
+        files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT')
         RTSTRUCT_read_filename = str(files_in_RTSTRUCT_folder[0])
         RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
         counter += 1
@@ -214,9 +214,9 @@ filenumbers_tested = np.arange(10)
 filenumbers_tested = filenumbers_tested + 1
 
 for i in filenumbers_tested :
-    DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i))
-    RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i))
-    files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)))
+    DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
+    RTSTRUCT_initial_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-RTSTRUCT')
+    files_in_RTSTRUCT_folder = os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i)) + '-RTSTRUCT')
     RTSTRUCT_filename = files_in_RTSTRUCT_folder[0]
     RTSTRUCT_read_filename = str(RTSTRUCT_filename)
     RTSTRUCT_path = RTSTRUCT_initial_path + '/' + RTSTRUCT_read_filename
