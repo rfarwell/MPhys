@@ -133,7 +133,6 @@ def resample_MASKS(patient_number, interpolator = sitk.sitkNearestNeighbor, defa
     
     sitk.WriteImage(GTV_1_mask_3d_image_resampled, GTV_1_MASK_write_path)
     sitk.WriteImage(ALL_GTV_mask_3d_image_resampled, ALL_GTV_MASK_write_path)
-    
 
     return
 
@@ -146,7 +145,7 @@ def opening_test(patient_number) :
 number_of_iterations = 10
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
-filenumbers = [7]
+# filenumbers = [7]
 
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
@@ -173,8 +172,8 @@ for i in filenumbers :
                 print('The ROIs for this patient included the gtv-preop so has been skipped')
                 continue
 
-        resample_DICOM(patient_number = i)
-        resample_MASKS(patient_number = i)
+        resample_DICOM(patient_number = i, interpolator = sitk.sitkLinear, default_pixel_value = -1024)
+        resample_MASKS(patient_number = i, interpolator = sitk.sitkNearestNeighbor, default_pixel_value = 0)
 
         print('Completed writing files for LUNG1-' + str('{0:03}'.format(i)) +'.')       
 
