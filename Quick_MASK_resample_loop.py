@@ -95,10 +95,10 @@ def resample_MASKS(patient_number, interpolator = sitk.sitkNearestNeighbor, defa
     
     #==============================================================
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
-    mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
-    mask_3d += rtstruct.get_roi_mask_by_name("GTV-1")
-    # mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
-    # mask_3d = mask_3d_GTV_1
+    # mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
+    # mask_3d += rtstruct.get_roi_mask_by_name("GTV-1")
+    mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
+    mask_3d = mask_3d_GTV_1
     print(" (GTV1) mask_3d shape is: " + str(mask_3d.shape))
     mask_3d = mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
     mask_3d_image = sitk.GetImageFromArray(mask_3d) #Converting mask_3d array to an image
@@ -158,7 +158,7 @@ def opening_test(patient_number) :
 number_of_iterations = 10
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
-filenumbers = [7]
+filenumbers = [1, 7]
 
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
