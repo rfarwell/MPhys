@@ -142,7 +142,7 @@ def opening_test(patient_number) :
     """
 
 #=====================================================================================================================
-number_of_iterations = 40
+number_of_iterations = 10
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
 
