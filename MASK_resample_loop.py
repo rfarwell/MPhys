@@ -78,7 +78,7 @@ def resample_DICOM(interpolator = sitk.sitkLinear, default_pixel_value = -1024) 
 
     return DICOM_resampled
 
-def resample_GTV_1_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value = 0, Regions_of_Interest = ["Lung-Right", "Lung-Left"]) :
+def resample_GTV_1_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_value = 0) :
     """
     This function will perform the whole resampling process on a mask produced from an RTSTRUCT
     file and will make use of the earlier defined resample_volume function.
@@ -89,12 +89,7 @@ def resample_GTV_1_MASK(interpolator = sitk.sitkNearestNeighbor, default_pixel_v
     
     # print(str(i) + ': ' + str(rtstruct.get_roi_names())) # View all of the ROI names from within the image
     
-    #Getting arrays for all the masks for the determined ROIs
-    #Note that these are only the ROIs for LUNG1-001. Other patients may have different ROIs which is something I need to check.
-    # mask_3d_Lung_Right = rtstruct.get_roi_mask_by_name("Lung-Right") 
-    # mask_3d_Lung_Left = rtstruct.get_roi_mask_by_name("Lung-Left")
     mask_3d_GTV_1 = rtstruct.get_roi_mask_by_name("GTV-1")
-    # mask_3d_spinal_cord = rtstruct.get_roi_mask_by_name("Spinal-Cord")
 
     mask_3d = mask_3d_GTV_1
     
