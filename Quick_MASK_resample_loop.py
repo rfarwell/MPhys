@@ -71,7 +71,7 @@ def resample_DICOM(patient_number, interpolator = sitk.sitkLinear, default_pixel
 
     Rory Farwell and Patrick Hastings (14/11/2021)
     """
-    DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/2NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-CT.nii'
+    DICOM_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-CT.nii'
 
     DICOM_paths = reader.GetGDCMSeriesFileNames(DICOM_series_path)
     reader.SetFileNames(DICOM_paths)
@@ -88,8 +88,8 @@ def resample_MASKS(patient_number, interpolator = sitk.sitkNearestNeighbor, defa
 
     Rory Farwell and Patrick Hastings (14/11/2021)
     """
-    GTV_1_MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/2NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-GTV-1.nii'
-    ALL_GTV_MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/2NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-ALL_GTV.nii'
+    GTV_1_MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-GTV-1.nii'
+    ALL_GTV_MASK_write_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT/LUNG1-' + str('{0:03}'.format(patient_number)) + '-ALL_GTV.nii'
     
     #==============================================================
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
@@ -180,7 +180,7 @@ for i in filenumbers :
         print('Unable to read either RTSTRUCT or DICOM series for LUNG1-' + str('{0:03}'.format(i)) + 'so it has been skipped.')
         continue # if the RTSTRUCT or DICOM can't be opened then this 'i' is skipped
 
-print(len(os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/2NSCLC_resampled_CT_and_RTSTRUCT')))
+print(len(os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT')))
 
 
     # ROIs = rtstruct.get_roi_names()
