@@ -25,8 +25,8 @@ reader = sitk.ImageSeriesReader()
 #================================================================================================
 
 #========================== DEFINING RESAMPLING VARIABLES =======================================
-Output_Spacing = [1, 1, 6]
-new_size = [512, 512, 128]
+Output_Spacing = [1, 1, 1]
+new_size = [512, 512, 512]
 #================================================================================================
 
 #========================== DEFINING FUNCTIONS ==================================================
@@ -142,10 +142,10 @@ def opening_test(patient_number) :
     """
 
 #=====================================================================================================================
-number_of_iterations = 10
+number_of_iterations = 40
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
-# filenumbers = [7]
+
 
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
