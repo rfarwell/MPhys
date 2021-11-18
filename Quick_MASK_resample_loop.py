@@ -142,6 +142,7 @@ def opening_test(patient_number) :
 number_of_iterations = 10
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
+filenumbers = [19]
 
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
