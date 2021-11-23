@@ -185,19 +185,3 @@ for i in filenumbers :
         continue # if the RTSTRUCT or DICOM can't be opened then this 'i' is skipped
 
 print(len(os.listdir('/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT')))
-
-
-    # ROIs = rtstruct.get_roi_names()
-    
-    # for ROI in ROIs :
-    #     str(ROI)
-    #     if "pre-op" in ROI :
-    #         print('The ROIs for this patient included the gtv-preop so has been skipped')
-    #         continue
-
-    # resample_DICOM(patient_number = i)
-    # resample_MASKS(patient_number = i)
-
-    # print('Completed writing files for LUNG1-' + str('{0:03}'.format(i)) +'.')
-
-print("===========================================================================")
