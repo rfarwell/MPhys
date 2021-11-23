@@ -128,11 +128,11 @@ print("========================PROGRAM STARTING========================")
 print(f"{Fore.YELLOW}Read path: {nifty_path}{Style.RESET_ALL}")
 print(f"{Fore.YELLOW}Write path: {output_path}{Style.RESET_ALL}")
 
-for filename in os.listdir(nifty_path) :
-    if "-GTV-1" in filename :
-        print(filename)
-    else:
-        continue
+# for filename in os.listdir(nifty_path) :
+#     if "-GTV-1" in filename :
+#         print(filename)
+#     else:
+#         continue
 
 for filename in os.listdir(nifty_path) :
     
