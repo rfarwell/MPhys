@@ -194,7 +194,7 @@ for filename in os.listdir(nifty_path) :
         cropped_image = sitk.GetImageFromArray(cropped_array)
         cropped_image.SetDirection(image.GetDirection())
         cropped_image.SetSpacing(image.GetSpacing())
-        cropped_image.SetOrigin(CoMs[index])
+        cropped_image.SetOrigin(image.GetOrigin())
         sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
 
     
