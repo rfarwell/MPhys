@@ -126,6 +126,12 @@ temp_largest_tumour_axis = 0
 print("========================PROGRAM STARTING========================")
 
 for filename in os.listdir(nifty_path) :
+    if "-GTV-1" in filename :
+        print(filename)
+    else:
+        continue
+
+for filename in os.listdir(nifty_path) :
     
     if"-GTV-1" in filename :
         """
@@ -139,6 +145,7 @@ for filename in os.listdir(nifty_path) :
         GTV_1_mask_array = sitk.GetArrayFromImage(GTV_1_mask_image)
         CoM_temp = get_CoM(GTV_1_mask_array)
         CoMs.append(CoM_temp)
+        print(f"After processing {filename} CoMs (array) length: {len(CoMs)}")
         temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
         print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
         if temp_largest_tumour_axis > largest_tumour_axis :
@@ -149,32 +156,43 @@ for filename in os.listdir(nifty_path) :
 
 cropping_size = largest_tumour_axis + 15 # +15 because we want to pad by 1.5cm in each direction
 print(f"The cropping size is {cropping_size}")
+print(f"The length of CoMs is: {len(CoMs)}")
 
 
 """ Will need to repeat this step for ALL_GTV masks and CTs"""
+counter = -0.5
 for filename in os.listdir(nifty_path) :
     if "ALL_GTV" in filename :
         continue
     else :
-        index_list = []
-        print(filename)
-        for i in (6,7,8) :
-            index_list.append(filename[i])
-        index = "".join(index_list)
-        index = int(index)
+        counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
+        index = np.floor(counter)
+        # index_list = []
+        # print(filename)
+        # for i in (6,7,8) :
+        #     index_list.append(filename[i])
+        # index = "".join(index_list)
+        # index = int(index)
+        # filenumber = index
+        # index = index - 1
         print(index)
         CoM_index = CoMs[index]
         print(f"CoM: {CoM_index}")
 
         image = sitk.ReadImage(os.path.join(nifty_path, filename))
+        print(f"Original image size: {image.GetSize()}")
+        print(f"Original image origin: {image.GetOrigin()}")
         array = sitk.GetArrayFromImage(image)
+        print(f"Original array size: {array.shape}")
 
         cropped_array = cropping(array, CoM_index, cropping_size, filename)
+
+        print(f"Cropped array shape : {cropped_array.shape}")
 
         cropped_image = sitk.GetImageFromArray(cropped_array)
         cropped_image.SetDirection(image.GetDirection())
         cropped_image.SetSpacing(image.GetSpacing())
-        cropped_image.SetOrigin(image.GetOrigin())
+        cropped_image.SetOrigin(CoMs[index])
         sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
 
     
