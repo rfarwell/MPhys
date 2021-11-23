@@ -169,14 +169,6 @@ for filename in os.listdir(nifty_path) :
         print(filename)
         index = np.floor(counter)
         index = int(index)
-        # index_list = []
-        # print(filename)
-        # for i in (6,7,8) :
-        #     index_list.append(filename[i])
-        # index = "".join(index_list)
-        # index = int(index)
-        # filenumber = index
-        # index = index - 1
         print(index)
         CoM_index = CoMs[index]
         print(f"CoM: {CoM_index}")
