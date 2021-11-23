@@ -166,6 +166,7 @@ for filename in os.listdir(nifty_path) :
         continue
     else :
         counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
+        print(filename)
         index = np.floor(counter)
         index = int(index)
         # index_list = []
