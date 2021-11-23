@@ -18,7 +18,7 @@ from colorama import Fore
 from colorama import Style
 
 nifty_path = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT"
-output_path = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_cropped"
+output_path = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_cropped_GTV-1"
 
 def get_CoM(input_mask) :
     """
@@ -124,7 +124,7 @@ CoMs = []
 largest_tumour_axis = 0
 temp_largest_tumour_axis = 0
 print("========================PROGRAM STARTING========================")
-
+#============================== CROPPING GTV-1 MASKS ===================
 for filename in os.listdir(nifty_path) :
     if "-GTV-1" in filename :
         print(filename)
@@ -188,7 +188,5 @@ for filename in os.listdir(nifty_path) :
         cropped_image.SetSpacing(image.GetSpacing())
         cropped_image.SetOrigin(image.GetOrigin())
         sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
-
-    
-
+#=======================================================================  
 
