@@ -151,7 +151,6 @@ DICOM_resampled = resample_DICOM()
 mask_3d_image_resampled = resample_MASK()
 sitk.WriteImage(mask_3d_image_resampled, RTSTRUCT_write_destination)
 sitk.WriteImage(DICOM_resampled, DICOM_write_destination)
-print("Finished writing files.")
 #================================================================================================
 
 
