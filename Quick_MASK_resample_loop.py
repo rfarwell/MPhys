@@ -97,55 +97,49 @@ def resample_MASKS(patient_number, interpolator = sitk.sitkNearestNeighbor, defa
     rtstruct = RTStructBuilder.create_from(DICOM_series_path, RTSTRUCT_path) # Telling the code where to get the DICOMs and RTSTRUCT from
 
     GTV_1_mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
-    ALL_GTV_mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
+    # ALL_GTV_mask_3d = np.zeros(DICOM.GetSize(), dtype = bool)
 
     print(ROIs) #Printing to check the for loop below is doing the right thing.
 
     for ROI in ROIs :
-        if "GTV" in ROI or "gtv" in ROI :
-            mask_3d_temp = rtstruct.get_roi_mask_by_name(str(ROI))
-            ALL_GTV_mask_3d = ALL_GTV_mask_3d + mask_3d_temp
-            print(ROI)
+        # if "GTV" in ROI or "gtv" in ROI :
+        #     mask_3d_temp = rtstruct.get_roi_mask_by_name(str(ROI))
+        #     ALL_GTV_mask_3d = ALL_GTV_mask_3d + mask_3d_temp
+        #     print(ROI)
         if ROI == "GTV-1" :
             mask_3d_temp = rtstruct.get_roi_mask_by_name(str(ROI))
             GTV_1_mask_3d = GTV_1_mask_3d + mask_3d_temp
     
     GTV_1_mask_3d = GTV_1_mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
-    ALL_GTV_mask_3d = ALL_GTV_mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
+    # ALL_GTV_mask_3d = ALL_GTV_mask_3d.astype(np.float32) #Converting this array from boolean to float so that it can be converted to .nii file
     
     GTV_1_mask_3d_image = sitk.GetImageFromArray(GTV_1_mask_3d) #Converting array to an image
-    ALL_GTV_mask_3d_image = sitk.GetImageFromArray(ALL_GTV_mask_3d) #Converting array to an image
+    # ALL_GTV_mask_3d_image = sitk.GetImageFromArray(ALL_GTV_mask_3d) #Converting array to an image
    
     GTV_1_mask_3d_image = permute_axes(GTV_1_mask_3d_image, [1,2,0]) #permuting the axes because SimpleITK changes the axes ordering
-    ALL_GTV_mask_3d_image = permute_axes(ALL_GTV_mask_3d_image, [1,2,0]) #permuting the axes because SimpleITK changes the axes ordering
+    # ALL_GTV_mask_3d_image = permute_axes(ALL_GTV_mask_3d_image, [1,2,0]) #permuting the axes because SimpleITK changes the axes ordering
     
     GTV_1_mask_3d_image.SetSpacing(DICOM.GetSpacing())
     GTV_1_mask_3d_image.SetDirection(DICOM.GetDirection())
     GTV_1_mask_3d_image.SetOrigin(DICOM.GetOrigin())
 
-    ALL_GTV_mask_3d_image.SetSpacing(DICOM.GetSpacing())
-    ALL_GTV_mask_3d_image.SetDirection(DICOM.GetDirection())
-    ALL_GTV_mask_3d_image.SetOrigin(DICOM.GetOrigin())
+    # ALL_GTV_mask_3d_image.SetSpacing(DICOM.GetSpacing())
+    # ALL_GTV_mask_3d_image.SetDirection(DICOM.GetDirection())
+    # ALL_GTV_mask_3d_image.SetOrigin(DICOM.GetOrigin())
 
-    ALL_GTV_mask_3d_image_resampled = resample_volume(ALL_GTV_mask_3d_image, interpolator, default_pixel_value)
+    # ALL_GTV_mask_3d_image_resampled = resample_volume(ALL_GTV_mask_3d_image, interpolator, default_pixel_value)
     GTV_1_mask_3d_image_resampled = resample_volume(GTV_1_mask_3d_image, interpolator, default_pixel_value)
     
     
     sitk.WriteImage(GTV_1_mask_3d_image_resampled, GTV_1_MASK_write_path)
-    sitk.WriteImage(ALL_GTV_mask_3d_image_resampled, ALL_GTV_MASK_write_path)
+    # sitk.WriteImage(ALL_GTV_mask_3d_image_resampled, ALL_GTV_MASK_write_path)
 
     return
 
-def opening_test(patient_number) :
-    """
-    Tries to open both the DICOM series and RTSTRUCT
-    """
-
 #=====================================================================================================================
-number_of_iterations = 10
+number_of_iterations = 422
 filenumbers = np.arange(number_of_iterations)
 filenumbers = filenumbers + 1
-
 
 for i in filenumbers :
     DICOM_series_path = '/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_Sorted/LUNG1-' + str('{0:03}'.format(i) + '-CT')
