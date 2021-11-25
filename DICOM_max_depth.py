@@ -37,6 +37,8 @@ number_of_iterations = 422+1 #I want to make this so that the program can read t
 biggest_size = 0
 biggest_size_label = 0
 sizes = []
+too_big_sizes = []
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,6 +54,9 @@ for x in range(1, number_of_iterations) :
       size = image.GetSize()
       sizes.append(size[2])
       
+      if size[2] > 170 :
+         too_big_sizes.append(size[2])
+
       if size[2] > biggest_size :
          biggest_size = size[2]
          biggest_size_label = x
@@ -60,4 +65,6 @@ for x in range(1, number_of_iterations) :
       
 print("The largest depth in the NSCLC-Radiomics data set is " + str(biggest_size) + " from LUNG1-" + str('{0:03}'.format(biggest_size_label)))
 
-print(sizes)
+# print(sizes)
+print(too_big_sizes)
+print(len(too_big_sizes))
