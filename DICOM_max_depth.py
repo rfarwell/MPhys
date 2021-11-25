@@ -15,6 +15,8 @@ from __future__ import print_function
 import SimpleITK as sitk
 import sys
 import os
+import matplotlib.pyplot as plt
+import numpy as np
 reader = sitk.ImageSeriesReader()
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -34,20 +36,21 @@ number_of_iterations = 422+1 #I want to make this so that the program can read t
 
 biggest_size = 0
 biggest_size_label = 0
+sizes = []
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~CODE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 for x in range(1, number_of_iterations) :
       _3_digit_x = '{0:03}'.format(x) #formats the 'x' to the form 'yzx' e.g. 1 -> 001
                                     # so that it fits the format of the naming scheme used
                                     # e.g. LUNG1-001-CTUnknownStudyID
-      directory_full = directory + str(_3_digit_x) + '-CTUnknownStudyID/' #   This line will change depending on the naming scheme that you have used
+      directory_full = directory + str(_3_digit_x) + '-CT' #   This line will change depending on the naming scheme that you have used
       dicom_names = reader.GetGDCMSeriesFileNames(directory_full)
       reader.SetFileNames(dicom_names)
       image = reader.Execute()
       size = image.GetSize()
+      sizes.append(size[2])
       
       if size[2] > biggest_size :
          biggest_size = size[2]
@@ -57,3 +60,4 @@ for x in range(1, number_of_iterations) :
       
 print("The largest depth in the NSCLC-Radiomics data set is " + str(biggest_size) + " from LUNG1-" + str('{0:03}'.format(biggest_size_label)))
 
+print(sizes)
