@@ -104,6 +104,7 @@ def open_metadata() :
 
     return patient_IDs, time_markers, dead_statuses
 
+
 def patient_label() :
     """
     Sorts patients into categories based upon when they died. 
@@ -156,7 +157,6 @@ def training_loop():
         outputs = model(images)
         #print(f'Outputs: {outputs}')
         # print (outputs)
-        #loss = criterion(outputs, hot_labels)
         loss = criterion(outputs, labels)
         
         # BACKWARD PASS
@@ -350,7 +350,6 @@ class ImageDataset(Dataset) :
       mx_x, mx_yz = 10, 10 
       # find shift values
       cc_shift, ap_shift, lr_shift = random.randint(-mx_x,mx_x), random.randint(-mx_yz,mx_yz), random.randint(-mx_yz,mx_yz)
-      print(f'Shift by: {cc_shift}, {ap_shift}, {lr_shift}.')
       # pad for shifting into
       image = np.pad(image, pad_width=((mx_x,mx_x),(mx_yz,mx_yz),(mx_yz,mx_yz)), mode='constant', constant_values=-1024) # original is zero but appears to work better with -1024 (HU of air)
       # crop to complete shift
@@ -408,7 +407,7 @@ class ImageDataset(Dataset) :
           new_image = new_image[ud_extra:ud_extra+height, ap_extra:ap_extra+width, lr_extra:lr_extra+depth]
           return new_image
       return image
-
+      
 class CNN(nn.Module):   
     def __init__(self):
       super(CNN, self).__init__()
