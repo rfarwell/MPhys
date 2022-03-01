@@ -22,7 +22,6 @@ print(f'Running {__file__}')
 
 import numpy as np
 import random
-import os
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 import torch
@@ -52,6 +51,19 @@ from torchsummary import summary
 
 from scipy.ndimage import zoom, rotate
 
+#=================== Get user input for plot save name =============================================================
+import sys # Will be used to allow the user to input the desired save name of 
+
+if len(sys.argv) < 3 :
+  print("Error: User inputs are wrong.")
+  print("Correct usage: '/content/gdrive/MyDrive/University/Year_4_Sem_2/MultiClass_Classifier.py' <Number of epochs> <Plot save name.png>")
+  sys.exit(1)
+
+plot_filename = sys.argv[2]
+print(plot_filename)
+plot_folder_path = "/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/"
+
+
 #===================================================================================================================
 #=================== COLAB SPECIFIC CODE ===========================================================================
 #===================================================================================================================
@@ -70,12 +82,18 @@ print(f'Using {device} device')
 # Specify project folder location
 
 """
-For Rory: /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
+For Rory (short patient list): /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
+For Rory (full patient list): /content/gdrive/MyDrive/Data/NSCLC-Radiomics-Clinical-Data.csv
 For Patrick: /content/gdrive/My Drive/Mphys project/cancerdatasem2.csv
 """
 project_folder = "/content/gdrive/MyDrive/MPhys/Data/"
 clinical_data_filename = "COLAB-Clinical-Data.csv"
 print(os.path.join(project_folder, clinical_data_filename))
+
+# Unhash this to use the full dataset
+# project_folder = "/content/gdrive/MyDrive/Data/"
+# clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
+# print(os.path.join(project_folder, clinical_data_filename))
 
 #===================================================================================================================
 #=================== DEFINING FUNCTIONS ============================================================================
@@ -150,7 +168,7 @@ def training_loop():
         labels = labels.astype(np.float32)
         labels = torch.from_numpy(labels)
         labels = labels.long()
-        print(f'Labels: {labels}')
+        #print(f'Labels: {labels}')
         
         images = images.to(device)
         labels = labels.to(device)
@@ -219,8 +237,9 @@ def validation_loop() :
 
             #max returns (value, index) 
             _,predictions = torch.max(outputs, 1)
-            print(predictions)
+            print(f'Network predictions = {predictions}')
             targets = labels
+            print(f'Targets = {targets}')
             # print(f'predictions: {predictions}')
             # print(f'targets: {targets}')
             # print(f'correct in this batch: {(predictions == targets).sum().item()}')
@@ -359,18 +378,18 @@ class ImageDataset(Dataset) :
 
     if self.rotations and random.random() < 0.5 : # normal is 0.5
       roll_angle = np.clip(np.random.normal(loc=0,scale=3), -15, 15)
-      print(f'Rotation by angle {roll_angle} applied.')
+      # print(f'Rotation by angle {roll_angle} applied.')
       #print(roll_angle)
       image = self.rotation(image, roll_angle, rotation_plane=(1,2))
 
     if self.scales and random.random() < 0.5 : # normal is 0.5
       # same here -> zoom between 80-120%
       scale_factor = np.clip(np.random.normal(loc=1.0,scale=0.05), 0.7, 1.3)
-      print(f'Scaled by factor {scale_factor}.')
+      # print(f'Scaled by factor {scale_factor}.')
       image = self.scale(image, scale_factor)
     
     if self.flips and random.random() < 0.5 : # normal is 0.5
-        print(f'Left-right flip applied')
+        # print(f'Left-right flip applied')
         image = np.flipud(image)
     
     image = window_and_level(image)
@@ -462,7 +481,7 @@ batch_size = 4
 learning_rate = 0.001
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-num_epochs = 1
+num_epochs = int(sys.argv[1])
 
 #===================================================================================================================
 #=================== MAIN CODE =====================================================================================
@@ -490,7 +509,7 @@ training_data, validation_data, test_data = torch.utils.data.random_split(full_d
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
 test_dataloader = DataLoader(test_data, batch_size = 4, shuffle = False)
-validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = True)
+validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = False)
 
 summary(model, (1,264,264,264), batch_size = 4)
 
@@ -513,7 +532,24 @@ print(f'Average training losses = {avg_train_loss}')
 print(f'Validation losses = {avg_valid_loss}')
 
 #===================== PLOT LOSS CURVES ============================================================================
-plot_loss_curves()
+# plot_loss_curves()
+
+new_avg_train_loss = avg_train_loss
+new_avg_valid_loss = avg_valid_loss
+
+epochs = np.array(range(num_epochs)) + 1
+fig = plt.figure()
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
+fig.set_size_inches(20, 10)
+plt.plot(epochs, new_avg_train_loss, label = 'Average training loss',linewidth=7.0)
+plt.plot(epochs, new_avg_valid_loss, label = 'Average validation loss',linewidth=7.0)
+plt.legend(loc='best', prop={'size': 20})
+plt.ylabel('Average Loss', fontsize = 20)
+plt.xlabel('Epoch Number', fontsize = 20)
+plt.savefig(f'{plot_folder_path}{plot_filename}')
+plt.show()
+print(f'This plot has been saved at: {plot_folder_path}{plot_filename}')
 
 #===================== TESTING LOOP ================================================================================
 testing_accuracy = testing_loop()
