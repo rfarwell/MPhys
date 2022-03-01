@@ -11,12 +11,14 @@ Rory Farwell and Patrick Hastings 08/02/2022
 #===================================================================================================================
 #======================= IMPORTING FUNCTIONS =======================================================================
 #===================================================================================================================
-
+import os
+print(f'Running {__file__}')
 # Un hash below if on Google Colab
-!pip install torch torchvision
-!pip install opencv-contrib-python
-!pip install scikit-learn
-!pip install SimpleITK
+# !pip install torch 
+# !pip install torchvision
+# !pip install opencv-contrib-python
+# !pip install scikit-learn
+# !pip install SimpleITK
 
 import numpy as np
 import random
@@ -54,8 +56,8 @@ from scipy.ndimage import zoom, rotate
 #=================== COLAB SPECIFIC CODE ===========================================================================
 #===================================================================================================================
 # Connecting to the GoogleDrive and mounting to the specific folder
-from google.colab import drive
-drive.mount('/content/gdrive')
+# from google.colab import drive
+# drive.mount('/content/gdrive')
 
 #===================================================================================================================
 #=================== SELECT DEVICE =================================================================================
@@ -407,7 +409,7 @@ class ImageDataset(Dataset) :
           new_image = new_image[ud_extra:ud_extra+height, ap_extra:ap_extra+width, lr_extra:lr_extra+depth]
           return new_image
       return image
-      
+
 class CNN(nn.Module):   
     def __init__(self):
       super(CNN, self).__init__()
