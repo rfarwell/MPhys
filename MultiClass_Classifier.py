@@ -51,15 +51,37 @@ from torchsummary import summary
 
 from scipy.ndimage import zoom, rotate
 
-#=================== Get user input for plot save name =============================================================
+#=================== USER INPUTS ===================================================================================
 import sys # Will be used to allow the user to input the desired save name of 
-
-if len(sys.argv) < 3 :
+if len(sys.argv) < 6 :
   print("Error: User inputs are wrong.")
-  print("Correct usage: '/content/gdrive/MyDrive/University/Year_4_Sem_2/MultiClass_Classifier.py' <Number of epochs> <Plot save name.png>")
+  print("Correct usage: '/content/gdrive/MyDrive/University/Year_4_Sem_2/MultiClass_Classifier.py' <Number of epochs> <Time increment> <Upper time limit, in years> <Plot save name.png>")
   sys.exit(1)
 
-plot_filename = sys.argv[2]
+#NUMBER OF EPOCHS
+num_epochs = int(sys.argv[1])
+
+#TIME INCREMENT
+user_choice_of_time_increment = float(sys.argv[2])
+
+#MAXIMUM TIME IN YEARS
+maximum_time_in_years = int(sys.argv[3])
+maximum_time_in_days = maximum_time_in_years * 365
+
+number_of_categories = math.ceil(maximum_time_in_days/user_choice_of_time_increment) + 1
+
+#WHETHER TO USE FULL DATASET OR PARTIAL DATASET
+if sys.argv[4].lower() == 'true':
+  print('You chose to run the full dataset.')
+  full_dataset_choice = True
+elif sys.argv[4].lower() == 'false':
+  print('You chose to run the partial dataset.')
+  full_dataset_choice = False
+else:
+  print('Error: Your input for whether to use the full dataset must be "True" or "False".')
+  sys.exit(1)
+
+plot_filename = sys.argv[5]
 print(plot_filename)
 plot_folder_path = "/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/"
 
@@ -86,14 +108,16 @@ For Rory (short patient list): /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical
 For Rory (full patient list): /content/gdrive/MyDrive/Data/NSCLC-Radiomics-Clinical-Data.csv
 For Patrick: /content/gdrive/My Drive/Mphys project/cancerdatasem2.csv
 """
-project_folder = "/content/gdrive/MyDrive/MPhys/Data/"
-clinical_data_filename = "COLAB-Clinical-Data.csv"
-print(os.path.join(project_folder, clinical_data_filename))
-
-# Unhash this to use the full dataset
-# project_folder = "/content/gdrive/MyDrive/Data/"
-# clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
-# print(os.path.join(project_folder, clinical_data_filename))
+if full_dataset_choice == False:
+  print("You chose to use the partial dataset")
+  project_folder = "/content/gdrive/MyDrive/MPhys/Data/"
+  clinical_data_filename = "COLAB-Clinical-Data.csv"
+  print(os.path.join(project_folder, clinical_data_filename))
+elif full_dataset_choice == True:
+  print("You chose to use the full dataset")
+  project_folder = "/content/gdrive/MyDrive/Data/"
+  clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
+  print(os.path.join(project_folder, clinical_data_filename))
 
 #===================================================================================================================
 #=================== DEFINING FUNCTIONS ============================================================================
@@ -133,21 +157,21 @@ def patient_label(time_increment) :
 
     Rory Farwell and Patrick Hastings 08/02/2022
     """
-
+    maximum_label = math.floor(maximum_time_in_days/time_increment)
     dead_counter = 0
     alive_counter = 0
     no_info_counter = 0
     labels = np.empty(len(dead_statuses))
 
     for i in range(len(dead_statuses)):
-      if dead_statuses[i] == 1 and time_markers[i] < 1825: #check patient is dead before 1800 days(5 years)
+      if dead_statuses[i] == 1 and time_markers[i] < maximum_time_in_days: #check patient is dead before 1800 days(5 years)
         labels[i] = math.floor(time_markers[i] / time_increment)
         print(f'Conversion: Timepoint = {time_markers[i]} was converted to Category = {labels[i]}.') #Checking the function.
-      elif dead_statuses[i] == 1 and time_markers[i] > 1825: # add to category 10 if patient died after more than 5 years
-        labels[i] = 10
+      elif dead_statuses[i] == 1 and time_markers[i] > maximum_time_in_days: # add to category 10 if patient died after more than 5 years
+        labels[i] = maximum_label
         print(f'Conversion: Timepoint = {time_markers[i]} was converted to Category = {labels[i]}.') #Checking the function.
-      elif dead_statuses[i] == 0 and time_markers[i] > 1825 : 
-          labels[i] = 10 # add to category 10 if patient last seen alive after 5 years
+      elif dead_statuses[i] == 0 and time_markers[i] > maximum_time_in_days : 
+          labels[i] = maximum_label # add to category 10 if patient last seen alive after 5 years
 
     return labels
 
@@ -175,7 +199,8 @@ def training_loop():
 
         # FORWARD PASS
         outputs = model(images)
-        #print(f'Outputs: {outputs}')
+        print(f'Outputs: {outputs}')
+        print(f'Labels: {labels}')
         # print (outputs)
         loss = criterion(outputs, labels)
         
@@ -439,7 +464,7 @@ class CNN(nn.Module):
       self.conv3 = nn.Conv3d(64,128,2,2)
       self.conv4 = nn.Conv3d(128,64,1,1)
       self.conv5 = nn.Conv3d(64,16,1,1)
-      self.conv6 = nn.Conv3d(16,11,1,1)
+      self.conv6 = nn.Conv3d(16,number_of_categories,1,1)
 
     # Defining the forward pass  (NIN method)  
     def forward(self, x):
@@ -449,9 +474,7 @@ class CNN(nn.Module):
         x = F.leaky_relu(self.conv4(x))
         x = F.leaky_relu(self.conv5(x))
         x = self.avg_pool(self.conv6(x))
-        x = x.view(-1,11)
-        
-        
+        x = x.view(-1,number_of_categories)
         return x
         
 model = CNN().to(device) # Send the CNN to the device
@@ -481,30 +504,37 @@ batch_size = 4
 learning_rate = 0.001
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-num_epochs = int(sys.argv[1])
+#number of epochs is defined at the top of the code by user input
 
 #===================================================================================================================
 #=================== MAIN CODE =====================================================================================
 #===================================================================================================================
-
+user_choice_of_time_increment = int(sys.argv[2])
+number_of_categories = math.ceil(1825/user_choice_of_time_increment) + 1
+print(f'Number of categories: {number_of_categories}.')
 patient_labels = []
 patient_IDs, time_markers, dead_statuses = open_metadata()#gathers patient data
-patient_labels = patient_label(182.5)#assigns each patients a label based on survial time
+patient_labels = patient_label(user_choice_of_time_increment)#assigns each patients a label based on survial time
 
-patient_labels = np.reshape(patient_labels, [100, 1])
-patient_IDs = np.reshape(patient_IDs, [100, 1])
+patient_labels = np.reshape(patient_labels, [-1, 1])
+patient_IDs = np.reshape(patient_IDs, [-1, 1])
 comb_array = np.hstack((patient_IDs, patient_labels))#creates one 2d array where each row is a patient and its corresponding label
 comb_array = comb_array.tolist()
+print(len(patient_IDs))
 
-
-
-plt.hist(patient_labels, bins = 11)
+category_histogram = plt.figure()
+category_histogram.set_size_inches(20,10)
+plt.hist(patient_labels, bins = number_of_categories)
+plt.xlabel('Category', fontsize = 20)
+plt.ylabel('Frequency', fontsize = 20)
 plt.savefig(f'{plot_folder_path}Hist_of_Labels.png')
 plt.show()
 
+
+
 full_dataset = ImageDataset(comb_array, os.path.join(project_folder, "Textured_Masks"), transform = transform)
 
-training_data, validation_data, test_data = torch.utils.data.random_split(full_dataset, [70,15,15])
+training_data, validation_data, test_data = torch.utils.data.random_split(full_dataset, [int(0.7*len(patient_IDs)),int(0.15*len(patient_IDs)),int(0.15*len(patient_IDs))])
 
 
 
