@@ -125,7 +125,7 @@ def open_metadata() :
     return patient_IDs, time_markers, dead_statuses
 
 
-def patient_label() :
+def patient_label(time_increment) :
     """
     Sorts patients into categories based upon when they died. 
     Category numbers up to number 9 indicate the number of half-years survived
@@ -140,13 +140,13 @@ def patient_label() :
     labels = np.empty(len(dead_statuses))
 
     for i in range(len(dead_statuses)):
-      if dead_statuses[i] == 1 and time_markers[i] < 1800: #check patient is dead before 1800 days(5 years)
-        labels[i] = math.floor(time_markers[i] / 180)
+      if dead_statuses[i] == 1 and time_markers[i] < 1825: #check patient is dead before 1800 days(5 years)
+        labels[i] = math.floor(time_markers[i] / time_increment)
         print(f'Conversion: Timepoint = {time_markers[i]} was converted to Category = {labels[i]}.') #Checking the function.
-      elif dead_statuses[i] == 1 and time_markers[i] > 1800: # add to category 10 if patient died after more than 5 years
+      elif dead_statuses[i] == 1 and time_markers[i] > 1825: # add to category 10 if patient died after more than 5 years
         labels[i] = 10
         print(f'Conversion: Timepoint = {time_markers[i]} was converted to Category = {labels[i]}.') #Checking the function.
-      elif dead_statuses[i] == 0 and time_markers[i] > 1800 : 
+      elif dead_statuses[i] == 0 and time_markers[i] > 1825 : 
           labels[i] = 10 # add to category 10 if patient last seen alive after 5 years
 
     return labels
@@ -340,7 +340,7 @@ def window_and_level(image, level = -600, window = 1500) :
 #     return vol
 
 transform = transforms.Compose(
-    [transforms.ToTensor()] #added 13/12/2021 to normalize the inputs. THIS NORMALIZES to mean = 0 and std = 1
+    [transforms.ToTensor()] 
 )
 
 class ImageDataset(Dataset) :
@@ -489,7 +489,7 @@ num_epochs = int(sys.argv[1])
 
 patient_labels = []
 patient_IDs, time_markers, dead_statuses = open_metadata()#gathers patient data
-patient_labels = patient_label()#assigns each patients a label based on survial time
+patient_labels = patient_label(182.5)#assigns each patients a label based on survial time
 
 patient_labels = np.reshape(patient_labels, [100, 1])
 patient_IDs = np.reshape(patient_IDs, [100, 1])
@@ -499,6 +499,7 @@ comb_array = comb_array.tolist()
 
 
 plt.hist(patient_labels, bins = 11)
+plt.savefig(f'{plot_folder_path}Hist_of_Labels.png')
 plt.show()
 
 full_dataset = ImageDataset(comb_array, os.path.join(project_folder, "Textured_Masks"), transform = transform)
