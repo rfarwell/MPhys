@@ -19,6 +19,7 @@ print(f'Running {__file__}')
 # !pip install opencv-contrib-python
 # !pip install scikit-learn
 # !pip install SimpleITK
+print("test")
 
 import numpy as np
 import random
