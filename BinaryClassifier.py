@@ -9,12 +9,13 @@ Rory Farwell and Patrick Hastings 08/02/2022
 #====================================================================
 #======================= IMPORTING FUNCTIONS ========================
 #====================================================================
-
+import os
+print(f'Running {__file__}')
 # Un hash below if on Google Colab
-!pip install torch torchvision
-!pip install opencv-contrib-python
-!pip install scikit-learn
-!pip install SimpleITK
+# !pip install torch torchvision
+# !pip install opencv-contrib-python
+# !pip install scikit-learn
+# !pip install SimpleITK
 
 import numpy as np
 import random
@@ -47,12 +48,40 @@ from torchsummary import summary
 
 from scipy.ndimage import zoom, rotate
 
+#=================== USER INPUTS ====================================
+import sys
+
+if len(sys.argv) < 3 :
+  print("Error: User inputs are wrong.")
+  print("The correct usage is: '/content/gdrive/MyDrive/University/Year_4_Sem_2/BinaryClassifier.py' <Number of epochs> <Check day>  <Plot save name.png>")
+
+#NUMBER OF EPOCHS
+num_epochs = int(sys.argv[1])
+
+#CHECK DAY
+user_choice_of_check_day = float(sys.argv[2])
+
+#WHETHER TO USE FULL DATASET OR PARTIAL DATASET
+if sys.argv[3].lower() == 'true' :
+  print('You chose to run the full dataset')
+  full_dataset_choice = True
+elif sys.argv[3].lower() == 'false' :
+  print('You chose to run the partial dataset')
+  full_dataset_choice = False
+else:
+  print('Error: Your input for whether to use the full dataset must be "True" or "False".')
+  sys.exit(1)
+
+plot_filename = sys.argv[4]
+print(plot_filename)
+plot_folder_path = "/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/"
+
 #====================================================================
 #=================== COLAB SPECIFIC CODE ============================
 #====================================================================
 
-from google.colab import drive
-drive.mount('/content/gdrive')
+# from google.colab import drive
+# drive.mount('/content/gdrive')
 
 #====================================================================
 #=================== SELECT DEVICE ==================================
@@ -63,9 +92,23 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'Using {device} device')
 # /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
 # Specify project folder location
-project_folder = "/content/gdrive/MyDrive/Data"
-clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
-print(os.path.join(project_folder, clinical_data_filename))
+
+"""
+For Rory (short patient list): /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
+For Rory (full patient list): /content/gdrive/MyDrive/Data/NSCLC-Radiomics-Clinical-Data.csv
+For Patrick: /content/gdrive/My Drive/Mphys project/cancerdatasem2.csv
+"""
+if full_dataset_choice == False:
+  print("You chose to use the partial dataset")
+  project_folder = "/content/gdrive/MyDrive/MPhys/Data/"
+  clinical_data_filename = "COLAB-Clinical-Data.csv"
+  print(os.path.join(project_folder, clinical_data_filename))
+elif full_dataset_choice == True:
+  print("You chose to use the full dataset")
+  project_folder = "/content/gdrive/MyDrive/Data/"
+  clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
+  print(os.path.join(project_folder, clinical_data_filename))
+
 
 #====================================================================
 #=================== DEFINING FUNCTIONS =============================
@@ -387,13 +430,13 @@ def window_and_level(image, level = 700, window = 1000) :
 #====================================================================
 
 # Normalize class added 12/12/2021
-class Normalize():
-  def __init__(self):
-    pass
+# class Normalize():
+#   def __init__(self):
+#     pass
 
-  def __call__(self,vol):
-    vol =((vol-(vol.mean()))/vol.std()) + 1
-    return vol
+#   def __call__(self,vol):
+#     vol =((vol-(vol.mean()))/vol.std()) + 1
+#     return vol
 
 transform = transforms.Compose(
     [transforms.ToTensor()] #added 13/12/2021 to normalize the inputs. THIS NORMALIZES to mean = 0 and std = 1
@@ -410,6 +453,7 @@ class ImageDataset(Dataset) :
     self.rotations = rotate_augment
     self.flips = flip_augment
     self.scales = scale_augment
+    print(self.img_labels)
 
   def __len__(self) :
     return len(self.img_labels)
@@ -428,18 +472,25 @@ class ImageDataset(Dataset) :
       # find shift values
       cc_shift, ap_shift, lr_shift = random.randint(-mx_x,mx_x), random.randint(-mx_yz,mx_yz), random.randint(-mx_yz,mx_yz)
       # pad for shifting into
-      image = np.pad(image, pad_width=((mx_x,mx_x),(mx_yz,mx_yz),(mx_yz,mx_yz)), mode='constant', constant_values=0)
+      image = np.pad(image, pad_width=((mx_x,mx_x),(mx_yz,mx_yz),(mx_yz,mx_yz)), mode='constant', constant_values=-1024) # original is zero but appears to work better with -1024 (HU of air)
       # crop to complete shift
       image = image[mx_x+cc_shift:264+mx_x+cc_shift, mx_yz+ap_shift:264+mx_yz+ap_shift, mx_yz+lr_shift:264+mx_yz+lr_shift]
 
-    if self.rotations and random.random() < 0.5 :
-      roll_angle = np.clip(np.random.normal(loc=0,scale=3), -10, 10)
+    if self.rotations and random.random() < 0.5 : # normal is 0.5
+      roll_angle = np.clip(np.random.normal(loc=0,scale=3), -15, 15)
+      # print(f'Rotation by angle {roll_angle} applied.')
+      #print(roll_angle)
       image = self.rotation(image, roll_angle, rotation_plane=(1,2))
 
-    if self.scales and random.random() < 0.5 :
+    if self.scales and random.random() < 0.5 : # normal is 0.5
       # same here -> zoom between 80-120%
-      scale_factor = np.clip(np.random.normal(loc=1.0,scale=0.05), 0.8, 1.2)
+      scale_factor = np.clip(np.random.normal(loc=1.0,scale=0.05), 0.7, 1.3)
+      # print(f'Scaled by factor {scale_factor}.')
       image = self.scale(image, scale_factor)
+    
+    if self.flips and random.random() < 0.5 : # normal is 0.5
+        # print(f'Left-right flip applied')
+        image = np.flipud(image)
     
     image = window_and_level(image)
 
@@ -480,32 +531,6 @@ class ImageDataset(Dataset) :
 
 class CNN(nn.Module):   
     def __init__(self):
-        super(CNN, self).__init__()
-        # self.conv1 = nn.Conv3d(1,4,2,2)
-        # self.pool = nn.MaxPool3d(2,2)
-        # self.avg_pool = nn.AvgPool3d(2)
-        # self.conv2 = nn.Conv3d(4,16,2,2)
-        # self.conv3 = nn.Conv3d(16,64,2,2)
-        # self.conv4 = nn.Conv3d(64,256,2,2)
-        # self.dropout = nn.Dropout(0.25)
-        # self.fc1 = nn.Linear(256,64)
-        # self.fc2 = nn.Linear(64,16)
-        # self.fc3 = nn.Linear(16,2)
-
-    # def __init__(self):
-    #     super(CNN, self).__init__()
-        # self.conv1 = nn.Conv3d(1,16,2,2)
-        # self.pool = nn.MaxPool3d(2,2)
-        # self.avg_pool = nn.AvgPool3d(2)
-        # self.conv2 = nn.Conv3d(16,16,2,2)
-        # self.conv3 = nn.Conv3d(16,16,2,2)
-        # self.conv4 = nn.Conv3d(16,8,2,2)
-        # self.dropout = nn.Dropout(0.25)
-        # self.fc1 = nn.Linear(16,64)
-        # self.fc2 = nn.Linear(64,16)
-        # self.fc3 = nn.Linear(16,2)
-
-    def __init__(self):
       super(CNN, self).__init__()
       self.conv1 = nn.Conv3d(1,32,2,2)
       self.pool = nn.MaxPool3d(2,2)
@@ -516,41 +541,15 @@ class CNN(nn.Module):
       self.conv5 = nn.Conv3d(64,16,1,1)
       self.conv6 = nn.Conv3d(16,2,1,1)
 
-    # Defining the forward pass    (original)
-    # def forward(self, x):
-    #     print(f'Input to the network: {x}')
-    #     x = self.pool(F.leaky_relu(self.conv1(x)))
-    #     x = self.pool(F.leaky_relu(self.conv2(x)))
-    #     x = self.pool(F.leaky_relu(self.conv3(x)))
-    #     x = self.avg_pool(F.leaky_relu(self.conv4(x)))
-    #     print(f'After average pooling layer: {x}')
-    #     x = x.view(-1, 16)
-    #     print(f'After flattening: {x}')
-    #     x = self.dropout(x)
-    #     x = F.leaky_relu(self.fc1(x))
-    #     x = self.dropout(x)
-    #     x = F.leaky_relu(self.fc2(x))
-        
-    #     x = self.dropout(x)
-        
-    #     x = self.fc3(x)
-    #     print(x)
-    #     return x
-
     # Defining the forward pass  (NIN method)  
     def forward(self, x):
-        #print(f'Input to the network: {x}')
         x = self.pool(F.leaky_relu(self.conv1(x)))
         x = self.pool(F.leaky_relu(self.conv2(x)))
         x = self.pool(F.leaky_relu(self.conv3(x)))
-        #print(f'Before the weird conv layers: {x}')
         x = F.leaky_relu(self.conv4(x))
         x = F.leaky_relu(self.conv5(x))
         x = self.avg_pool(self.conv6(x))
-        #print(f'After the average pooling function: {x}')
         x = x.view(-1,2)
-        
-        
         return x
         
 model = CNN().to(device) # Send the CNN to the device
@@ -559,7 +558,7 @@ model = CNN().to(device) # Send the CNN to the device
 #=================== DEFIINING VARIABLES ============================
 #====================================================================
 
-check_day = 365 * 1.5 # This is defining the timeframe for which our CNN will consider the binary output (in days) 
+check_day = 365 * user_choice_of_check_day # This is defining the timeframe for which our CNN will consider the binary output (in days) 
 
 # sanity check to check progress
 counter = 0 
