@@ -133,13 +133,13 @@ def equalise_array_lengths(array_1, array_2) :
   """
   # output_array = []
 
-  if len(array_1) > len(array_2) :
-    array_1 = array_1[:len(array_2)]
-  elif len(array_1) < len(array_2) :
-    array_2 = array_2[:len(array_1)]
+  # if len(array_1) > len(array_2) :
+  #   array_1 = array_1[:len(array_2)]
+  # elif len(array_1) < len(array_2) :
+  #   array_2 = array_2[:len(array_1)]
 
-  # array_1 = array_1[:20]
-  # array_2 = array_2[:20]
+  array_1 = array_1[:20]
+  array_2 = array_2[:20]
 
   return (array_1, array_2)
 
@@ -428,9 +428,9 @@ def save_loss_plots():
   plt.xticks(fontsize = 20)
   plt.yticks(fontsize = 20)
   loss_plot.set_size_inches(20,10)
-  loss_plot.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
-  loss_plot.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
-  loss_plot.legend(loc = 'best', prop={'size': 20})
+  plt.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
+  plt.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
+  plt.legend(loc = 'best', prop={'size': 20})
   plt.ylabel('Average Loss', fontsize = 20)
   plt.xlabel('Epoch Number', fontsize = 20)
   plt.savefig(f'{plot_folder_path}{plot_time}_{plot_filename}_epoch_{epoch_counter}')
@@ -630,9 +630,9 @@ print(f"After separation into training, validation and testing arrays the number
 
 outcomes_train, outcomes_validate, outcomes_test = create_final_datasets()
 
-training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "Textured_Masks"), transform = transform)
-validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "Textured_Masks"), transform = transform)
-test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "Textured_Masks"), transform = transform) 
+training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
+validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
+test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
 
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
@@ -665,21 +665,21 @@ print(f'Average training losses = {avg_train_loss}')
 print(f'Validation losses = {avg_valid_loss}')
 
 #===================== PLOT LOSS CURVES =============================
-new_avg_train_loss = avg_train_loss
-new_avg_valid_loss = avg_valid_loss
+# new_avg_train_loss = avg_train_loss
+# new_avg_valid_loss = avg_valid_loss
 
-epochs = np.array(range(num_epochs)) + 1
-loss_plot = plt.figure()
-plt.xticks(fontsize = 20)
-plt.yticks(fontsize = 20)
-loss_plot.set_size_inches(20,10)
-loss_plot.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
-loss_plot.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
-loss_plot.legend(loc = 'best', prop={'size': 20})
-plt.ylabel('Average Loss', fontsize = 20)
-plt.xlabel('Epoch Number', fontsize = 20)
-plt.savefig(f'{plot_folder_path}{plot_filename}')
-print(f'The loss plot has been saved in: {plot_folder_path}{plot_filename}')
+# epochs = np.array(range(num_epochs)) + 1
+# loss_plot = plt.figure()
+# plt.xticks(fontsize = 20)
+# plt.yticks(fontsize = 20)
+# loss_plot.set_size_inches(20,10)
+# plt.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
+# plt.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
+# loss_plot.legend(loc = 'best', prop={'size': 20})
+# plt.ylabel('Average Loss', fontsize = 20)
+# plt.xlabel('Epoch Number', fontsize = 20)
+# plt.savefig(f'{plot_folder_path}{plot_filename}')
+# print(f'The loss plot has been saved in: {plot_folder_path}{plot_filename}')
 
 #===================== TESTING LOOP =================================
 testing_accuracy = testing_loop()
