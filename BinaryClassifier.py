@@ -50,8 +50,9 @@ from scipy.ndimage import zoom, rotate
 
 #=================== USER INPUTS ====================================
 import sys
+import time
 
-if len(sys.argv) < 3 :
+if len(sys.argv) < 4 :
   print("Error: User inputs are wrong.")
   print("The correct usage is: '/content/gdrive/MyDrive/University/Year_4_Sem_2/BinaryClassifier.py' <Number of epochs> <Check day>  <Plot save name.png>")
 
@@ -72,9 +73,19 @@ else:
   print('Error: Your input for whether to use the full dataset must be "True" or "False".')
   sys.exit(1)
 
+#FILENAME
+# Create a folder at path "folder path" if one does not already exist
+if not os.path.exists("/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/Loss_plots/"):
+  os.makedirs("folder path")
+
 plot_filename = sys.argv[4]
 print(plot_filename)
-plot_folder_path = "/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/"
+plot_date = time.strftime("%Y_%m_%d")
+plot_time = time.strftime("%H_%M_%S")
+plot_folder_path = f"/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/Loss_plots/{plot_date}/"
+if not os.path.exists(plot_folder_path):
+  os.makedirs(plot_folder_path)
+
 
 #====================================================================
 #=================== COLAB SPECIFIC CODE ============================
@@ -399,23 +410,6 @@ def testing_loop():
 
     return acc
 
-def plot_loss_curves() :
-  new_avg_train_loss = avg_train_loss
-  new_avg_valid_loss = avg_valid_loss
-
-  epochs = np.array(range(num_epochs)) + 1
-  fig = plt.figure()
-  plt.xticks(fontsize=20)
-  plt.yticks(fontsize=20)
-  fig.set_size_inches(20, 10)
-  plt.plot(epochs, new_avg_train_loss, label = 'Average training loss',linewidth=7.0)
-  plt.plot(epochs, new_avg_valid_loss, label = 'Average validation loss',linewidth=7.0)
-  plt.legend(loc='best', prop={'size': 20})
-  plt.ylabel('Average Loss', fontsize = 20)
-  plt.xlabel('Epoch Number', fontsize = 20)
-  plt.show()
-  return
-
 def window_and_level(image, level = 700, window = 1000) :
   maxval = level + window/2
   minval = level - window/2
@@ -423,6 +417,26 @@ def window_and_level(image, level = 700, window = 1000) :
   wld -=minval
   wld *= 1/window
   return wld
+
+
+def save_loss_plots():
+  new_avg_train_loss = avg_train_loss
+  new_avg_valid_loss = avg_valid_loss
+
+  epochs = np.array(range(epoch_counter)) + 1
+  loss_plot = plt.figure()
+  plt.xticks(fontsize = 20)
+  plt.yticks(fontsize = 20)
+  loss_plot.set_size_inches(20,10)
+  loss_plot.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
+  loss_plot.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
+  loss_plot.legend(loc = 'best', prop={'size': 20})
+  plt.ylabel('Average Loss', fontsize = 20)
+  plt.xlabel('Epoch Number', fontsize = 20)
+  plt.savefig(f'{plot_folder_path}{plot_time}_{plot_filename}_epoch_{epoch_counter}')
+  print(f'The loss plot has been saved in: {plot_folder_path}{plot_date}/{plot_time}_{plot_filename}_epoch_{epoch_counter}')
+
+  return
 
 
 #====================================================================
@@ -577,7 +591,7 @@ batch_size = 4
 learning_rate = 0.001
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-num_epochs = 8
+# number of epochs is defined at the top of the code by user input
 
 #====================================================================
 #=================== MAIN CODE ======================================
@@ -635,10 +649,14 @@ valid_loss = []
 avg_train_loss = np.empty(0)
 avg_valid_loss = np.empty(0)
 all_training_losses = []
+epoch_counter = 0
 
 for epoch in range(num_epochs):
+    epoch_counter += 1
     avg_train_loss = np.append(avg_train_loss, training_loop())
     avg_valid_loss = np.append(avg_valid_loss, validation_loop())
+    save_loss_plots()
+
 
 print('FINISHED TRAINING')
 print(f'All training batch losses = {all_training_losses}')
@@ -647,7 +665,21 @@ print(f'Average training losses = {avg_train_loss}')
 print(f'Validation losses = {avg_valid_loss}')
 
 #===================== PLOT LOSS CURVES =============================
-plot_loss_curves()
+new_avg_train_loss = avg_train_loss
+new_avg_valid_loss = avg_valid_loss
+
+epochs = np.array(range(num_epochs)) + 1
+loss_plot = plt.figure()
+plt.xticks(fontsize = 20)
+plt.yticks(fontsize = 20)
+loss_plot.set_size_inches(20,10)
+loss_plot.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
+loss_plot.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
+loss_plot.legend(loc = 'best', prop={'size': 20})
+plt.ylabel('Average Loss', fontsize = 20)
+plt.xlabel('Epoch Number', fontsize = 20)
+plt.savefig(f'{plot_folder_path}{plot_filename}')
+print(f'The loss plot has been saved in: {plot_folder_path}{plot_filename}')
 
 #===================== TESTING LOOP =================================
 testing_accuracy = testing_loop()
