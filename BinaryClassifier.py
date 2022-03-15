@@ -590,21 +590,19 @@ class CNN(nn.Module):
       super(CNN, self).__init__()
       self.conv1 = nn.Conv3d(1,32,2,2)
       self.pool = nn.MaxPool3d(2,2)
-      self.avg_pool = nn.AvgPool3d(4)
-      self.conv2 = nn.Conv3d(32,64,2,2)
-      self.conv3 = nn.Conv3d(64,128,2,2)
-      self.conv4 = nn.Conv3d(128,64,1,1)
-      self.conv5 = nn.Conv3d(64,16,1,1)
-      self.conv6 = nn.Conv3d(16,2,1,1)
+      self.avg_pool = nn.AvgPool3d(10)
+      self.conv2 = nn.Conv3d(32,128,2,2)
+      self.conv3 = nn.Conv3d(128,64,1,1)
+      self.conv4 = nn.Conv3d(64,16,1,1)
+      self.conv5 = nn.Conv3d(16,2,1,1)
 
     # Defining the forward pass  (NIN method)  
     def forward(self, x):
         x = self.pool(F.leaky_relu(self.conv1(x)))
         x = self.pool(F.leaky_relu(self.conv2(x)))
-        x = self.pool(F.leaky_relu(self.conv3(x)))
+        x = F.leaky_relu(self.conv3(x))
         x = F.leaky_relu(self.conv4(x))
-        x = F.leaky_relu(self.conv5(x))
-        x = self.avg_pool(self.conv6(x))
+        x = self.avg_pool(self.conv5(x))
         x = x.view(-1,2)
         return x
         
