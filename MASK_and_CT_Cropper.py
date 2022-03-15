@@ -46,9 +46,26 @@ def largest_gtv_finder(input_mask, CoMs) :
     max_distances.append(np.abs(np.min(positions[:, 1]) - CoM[1]))
     max_distances.append(np.abs(np.max(positions[:, 2]) - CoM[2]))
     max_distances.append(np.abs(np.min(positions[:, 2]) - CoM[2]))
-    print(f"max_distances array: {max_distances}")
+    # print(f"max_distances array: {max_distances}")
     largest_distance = np.max(max_distances)
     CoMs.append(CoM)
+    return largest_distance
+
+def largest_gtv_finder_single_CoM(input_mask, CoM) :
+    """
+    A function that find the difference between the lowest index and highest index of x,y,z
+    and returns the furthest distance above and below the CoM of the tumour in x,y,z
+    """
+    max_distances = []
+    positions = np.argwhere(input_mask)
+    max_distances.append(np.abs(np.max(positions[:, 0]) - CoM[0]))
+    max_distances.append(np.abs(np.min(positions[:, 0]) - CoM[0]))
+    max_distances.append(np.abs(np.max(positions[:, 1]) - CoM[1]))
+    max_distances.append(np.abs(np.min(positions[:, 1]) - CoM[1]))
+    max_distances.append(np.abs(np.max(positions[:, 2]) - CoM[2]))
+    max_distances.append(np.abs(np.min(positions[:, 2]) - CoM[2]))
+    # print(f"max_distances array: {max_distances}")
+    largest_distance = np.max(max_distances)
     return largest_distance
 
 def cropping(input_array, CoM_array, cropping_size, filename) :
@@ -81,41 +98,33 @@ def cropping(input_array, CoM_array, cropping_size, filename) :
             x_pad_before = np.abs(xstart)
         else :
             x_pad_before = 0
-        
         if ystart < 0 :
             y_pad_before = np.abs(ystart)
         else :
             y_pad_before = 0
-        
         if zstart < 0 :
             z_pad_before = np.abs(zstart)
         else :
             z_pad_before = 0
-
         if xend > 511 :
             x_pad_after = 511 - xend
         else :
             x_pad_after = 0
-
         if yend > 511 :
             y_pad_after = 511 - yend
         else :
             y_pad_after = 0
-
         if zend > 511 :
             z_pad_after = 511 - zend
         else :
-            z_pad_after = 0
-        
+            z_pad_after = 0      
         if "-CT" in filename :
             """
             Background for cropped image is -1024 not 0
             """
-            cropped_array = np.pad(cropped_array, [(x_pad_before, x_pad_after), (y_pad_before, y_pad_after), (z_pad_before, z_pad_after)], mode = 'constant', constant_values = [(-1024, -1024), (-1024, -1024), (-1024, -1024)])
-        
+            cropped_array = np.pad(cropped_array, [(x_pad_before, x_pad_after), (y_pad_before, y_pad_after), (z_pad_before, z_pad_after)], mode = 'constant', constant_values = [(-1024, -1024), (-1024, -1024), (-1024, -1024)])      
         elif "GTV-1" in filename or "ALL" in filename :
             cropped_array = np.pad(cropped_array, [(x_pad_before, x_pad_after), (y_pad_before, y_pad_after), (z_pad_before, z_pad_after)], mode = 'constant', constant_values = [(0, 0), (0, 0), (0, 0)])
-
         print(f"Cropped-array shape: {cropped_array.shape}")
     return cropped_array
 
@@ -134,6 +143,9 @@ for filename in os.listdir(nifty_path) :
     else:
         continue
 
+number_of_files_removed_for_being_too_big = 0
+good_size_filenames = []
+
 for filename in os.listdir(nifty_path) :
     
     if"-GTV-1" in filename :
@@ -147,15 +159,46 @@ for filename in os.listdir(nifty_path) :
         GTV_1_mask_image = sitk.ReadImage(os.path.join(nifty_path,filename))
         GTV_1_mask_array = sitk.GetArrayFromImage(GTV_1_mask_image)
         CoM_temp = get_CoM(GTV_1_mask_array)
+        temp_largest_tumour_axis = largest_gtv_finder_single_CoM(GTV_1_mask_array, CoM_temp)
+        if temp_largest_tumour_axis > 65 :
+            number_of_files_removed_for_being_too_big += 1
+            print(f'{Fore.RED}Please delete the following file: {filename} . This file has a tumour size of: {temp_largest_tumour_axis}.')
+            print(f'{Fore.RED}The number of files that need to be removed for being too big is: {number_of_files_removed_for_being_too_big}.{Style.RESET_ALL}')
+            continue
         CoMs.append(CoM_temp)
+        good_size_filenames.append(filename)
         print(f"After processing {filename} CoMs (array) length: {len(CoMs)}")
-        temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
+        # temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
         print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
         if temp_largest_tumour_axis > largest_tumour_axis :
             largest_tumour_axis = temp_largest_tumour_axis
             print(f"{Fore.GREEN}Largest tumour axis updated to {largest_tumour_axis}{Style.RESET_ALL}")
     else :
         continue
+
+
+# for filename in os.listdir(nifty_path) :
+    
+#     if"-GTV-1" in filename :
+#         """
+#         Loops over all files looking for masks of GTV-1. Finds CoM of the tumour from the mask array
+#         Finds the largest axis in that tummout
+#         Finds the largest overall distance from CoM to edge of a tumour which defines the size of
+#         our crop
+#         """
+#         print(f"Currently determining CoM and largest axis size for {filename}")
+#         GTV_1_mask_image = sitk.ReadImage(os.path.join(nifty_path,filename))
+#         GTV_1_mask_array = sitk.GetArrayFromImage(GTV_1_mask_image)
+#         CoM_temp = get_CoM(GTV_1_mask_array)
+#         CoMs.append(CoM_temp)
+#         print(f"After processing {filename} CoMs (array) length: {len(CoMs)}")
+#         temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
+#         print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
+#         if temp_largest_tumour_axis > largest_tumour_axis :
+#             largest_tumour_axis = temp_largest_tumour_axis
+#             print(f"{Fore.GREEN}Largest tumour axis updated to {largest_tumour_axis}{Style.RESET_ALL}")
+#     else :
+#         continue
 
 cropping_size = largest_tumour_axis + 15 # +15 because we want to pad by 1.5cm in each direction
 print(f"The cropping size is {cropping_size}")
