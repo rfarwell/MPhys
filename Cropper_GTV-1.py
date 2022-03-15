@@ -16,6 +16,7 @@ import os
 import SimpleITK as sitk
 from colorama import Fore
 from colorama import Style
+import matplotlib.pyplot as plt
 
 nifty_path = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT"
 output_path = "/Volumes/Seagate_HDD/NSCLC_resampled_cropped_GTV-1"
@@ -40,6 +41,24 @@ def largest_gtv_finder(input_mask, CoMs) :
     max_distances = []
     positions = np.argwhere(input_mask)
     CoM = CoMs.pop()
+    max_distances.append(np.abs(np.max(positions[:, 0]) - CoM[0]))
+    max_distances.append(np.abs(np.min(positions[:, 0]) - CoM[0]))
+    max_distances.append(np.abs(np.max(positions[:, 1]) - CoM[1]))
+    max_distances.append(np.abs(np.min(positions[:, 1]) - CoM[1]))
+    max_distances.append(np.abs(np.max(positions[:, 2]) - CoM[2]))
+    max_distances.append(np.abs(np.min(positions[:, 2]) - CoM[2]))
+    print(f"max_distances array: {max_distances}")
+    largest_distance = np.max(max_distances)
+    CoMs.append(CoM)
+    return largest_distance
+
+def largest_gtv_finder_single_CoM(input_mask, CoM) :
+    """
+    A function that find the difference between the lowest index and highest index of x,y,z
+    and returns the furthest distance above and below the CoM of the tumour in x,y,z
+    """
+    max_distances = []
+    positions = np.argwhere(input_mask)
     max_distances.append(np.abs(np.max(positions[:, 0]) - CoM[0]))
     max_distances.append(np.abs(np.min(positions[:, 0]) - CoM[0]))
     max_distances.append(np.abs(np.max(positions[:, 1]) - CoM[1]))
@@ -133,10 +152,10 @@ print(f"{Fore.YELLOW}Write path: {output_path}{Style.RESET_ALL}")
 #         print(filename)
 #     else:
 #         continue
-
+tumour_sizes = []
+remove_counter = 0
 for filename in os.listdir(nifty_path) :
-    
-    if"-GTV-1" in filename :
+    if"-GTV-1" in filename:
         """
         Loops over all files looking for masks of GTV-1. Finds CoM of the tumour from the mask array
         Finds the largest axis in that tummout
@@ -150,6 +169,7 @@ for filename in os.listdir(nifty_path) :
         CoMs.append(CoM_temp)
         print(f"After processing {filename} CoMs (array) length: {len(CoMs)}")
         temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
+        tumour_sizes.append(temp_largest_tumour_axis)
         print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
         if temp_largest_tumour_axis > largest_tumour_axis :
             largest_tumour_axis = temp_largest_tumour_axis
@@ -158,39 +178,46 @@ for filename in os.listdir(nifty_path) :
     else :
         continue
 
+print(f'Tumour sizes (with a list length of {len(tumour_sizes)}) = {tumour_sizes}.')
+plt.hist(tumour_sizes, bins = range(int(min(tumour_sizes)), int(max(tumour_sizes)), 1))
+plt.xlabel('Tumour axis size')
+plt.ylabel('Frequency')
+plt.show()
+
+
 cropping_size = largest_tumour_axis + 15 # +15 because we want to pad by 1.5cm in each direction
 print(f"The cropping size is {cropping_size} from {largest_axis_filename}")
 print(f"The length of CoMs is: {len(CoMs)}")
 
 
-""" Will need to repeat this step for ALL_GTV masks and CTs"""
-counter = -0.5
-for filename in os.listdir(nifty_path) :
-    if "ALL_GTV" in filename :
-        continue
-    else :
-        counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
-        print(filename)
-        index = np.floor(counter)
-        index = int(index)
-        print(index)
-        CoM_index = CoMs[index]
-        print(f"CoM: {CoM_index}")
+# """ Will need to repeat this step for ALL_GTV masks and CTs"""
+# counter = -0.5
+# for filename in os.listdir(nifty_path) :
+#     if "ALL_GTV" in filename :
+#         continue
+#     else :
+#         counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
+#         print(filename)
+#         index = np.floor(counter)
+#         index = int(index)
+#         print(index)
+#         CoM_index = CoMs[index]
+#         print(f"CoM: {CoM_index}")
 
-        image = sitk.ReadImage(os.path.join(nifty_path, filename))
-        print(f"Original image size: {image.GetSize()}")
-        print(f"Original image origin: {image.GetOrigin()}")
-        array = sitk.GetArrayFromImage(image)
-        print(f"Original array size: {array.shape}")
+#         image = sitk.ReadImage(os.path.join(nifty_path, filename))
+#         print(f"Original image size: {image.GetSize()}")
+#         print(f"Original image origin: {image.GetOrigin()}")
+#         array = sitk.GetArrayFromImage(image)
+#         print(f"Original array size: {array.shape}")
 
-        cropped_array = cropping(array, CoM_index, cropping_size, filename)
+#         cropped_array = cropping(array, CoM_index, cropping_size, filename)
 
-        print(f"Cropped array shape : {cropped_array.shape}")
+#         print(f"Cropped array shape : {cropped_array.shape}")
 
-        cropped_image = sitk.GetImageFromArray(cropped_array)
-        cropped_image.SetDirection(image.GetDirection())
-        cropped_image.SetSpacing(image.GetSpacing())
-        cropped_image.SetOrigin(image.GetOrigin())
-        sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
+#         cropped_image = sitk.GetImageFromArray(cropped_array)
+#         cropped_image.SetDirection(image.GetDirection())
+#         cropped_image.SetSpacing(image.GetSpacing())
+#         cropped_image.SetOrigin(image.GetOrigin())
+#         sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
 #=======================================================================  
 
