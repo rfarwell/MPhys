@@ -1,7 +1,7 @@
 """
 This code trains, validates and tests a custom binary classfiying CNN.
 
-The inputs to the network are 264 x 264 x 264 textured masks of NSCLC pre-treatment CT scans.
+The inputs to the network are 160 x 160 x 160 textured masks of NSCLC pre-treatment CT scans.
 
 Rory Farwell and Patrick Hastings 08/02/2022
 
@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 import torch
 
+from sklearn.metrics import confusion_matrix
 from mpl_toolkits.mplot3d import Axes3D
 from torch.nn import Module
 from torch.nn import Conv3d
@@ -117,7 +118,7 @@ if full_dataset_choice == False:
 elif full_dataset_choice == True:
   print("You chose to use the full dataset")
   project_folder = "/content/gdrive/MyDrive/Data/"
-  clinical_data_filename = "NSCLC-Radiomics-Clinical-Data.csv"
+  clinical_data_filename = "Final-NSCLC-Radiomics-Clinical-Data.csv"
   print(os.path.join(project_folder, clinical_data_filename))
 
 
@@ -133,13 +134,13 @@ def equalise_array_lengths(array_1, array_2) :
   """
   # output_array = []
 
-  # if len(array_1) > len(array_2) :
-  #   array_1 = array_1[:len(array_2)]
-  # elif len(array_1) < len(array_2) :
-  #   array_2 = array_2[:len(array_1)]
+  if len(array_1) > len(array_2) :
+    array_1 = array_1[:len(array_2)]
+  elif len(array_1) < len(array_2) :
+    array_2 = array_2[:len(array_1)]
 
-  array_1 = array_1[:20]
-  array_2 = array_2[:20]
+  # array_1 = array_1[:10]
+  # array_2 = array_2[:10]
 
   return (array_1, array_2)
 
@@ -291,7 +292,7 @@ def training_loop():
     model.train()
 
     for i, (images, labels) in enumerate(train_dataloader):
-        images = reshape(images, (images.shape[0], 1, 264, 264, 264))
+        images = reshape(images, (images.shape[0], 1, 160, 160, 160))
         images = images.float()
 
         hot_labels = convert_to_one_hot_labels(images, labels)
@@ -348,7 +349,7 @@ def validation_loop() :
         n_valid_correct = 0
         n_valid_samples = 0
         for images, labels in validation_dataloader :
-            images = reshape(images, (images.shape[0],1 ,264,264,264))
+            images = reshape(images, (images.shape[0],1 ,160,160,160))
             images = images.float()
             hot_labels = convert_to_one_hot_labels(images, labels)
 
@@ -374,6 +375,17 @@ def validation_loop() :
         acc = (100*n_valid_correct)/n_valid_samples
         print(f'Accuracy on validation set for epoch {epoch+1} = {acc:.1f}%')
         print(f'Loss on validation set = {valid_epoch_loss}')
+        
+        # Creating arrays that will be used to create an object for the results.
+        # From this data metrics will be calculated
+        labels_numpy = labels.numpy()
+        for i in range(labels_numpy.size) :
+          epoch_validation_targets.append(labels_numpy[i])
+
+        predictions_numpy = predictions.cpu().numpy()
+        for i in range(predictions_numpy.size) :
+          epoch_validation_predictions.append(predictions_numpy[i])
+        
 
         print(f'Finished validation for epoch {epoch+1}')
         print('=============================================')
@@ -390,7 +402,7 @@ def testing_loop():
     for images, labels in test_dataloader :
       # counter+=1
       # print(counter)
-      images = images = reshape(images, (images.shape[0],1 ,264,264,264))
+      images = images = reshape(images, (images.shape[0],1 ,160,160,160))
       images = images.float()
       hot_labels = convert_to_one_hot_labels(images, labels)
 
@@ -443,6 +455,36 @@ def save_loss_plots():
 #=================  CLASS DEFINITIONS ===============================
 #====================================================================
 
+class results :
+    def __init__(self, expected, predicted) :
+        self.expected = expected
+        self.predicted = predicted
+
+    def confusion_matrix(self):
+        print(confusion_matrix(self.expected, self.predicted))
+    
+    def evaluate_results(self):
+        self.true_positive_counter = 0
+        self.true_negative_counter = 0
+        self.false_positive_counter = 0
+        self.false_negative_counter = 0
+        for i in range(len(self.expected)) :
+            if self.expected[i] == 1 and self.predicted[i] == 1 :
+                self.true_positive_counter += 1
+                # print(f'[{self.expected[i]},{self.predicted[i]}] -> true positive')
+            elif self.expected[i] == 0 and self.predicted[i] == 0 :
+                self.true_negative_counter += 1
+                # print(f'[{self.expected[i]},{self.predicted[i]}] -> true negative')
+            elif self.expected[i] == 0 and self.predicted[i] == 1 :
+                self.false_positive_counter += 1 
+                # print(f'[{self.expected[i]},{self.predicted[i]}] -> false positive')
+            elif self.expected[i] == 1 and self.predicted[i] == 0 :
+                self.false_negative_counter += 1 
+                # print(f'[{self.expected[i]},{self.predicted[i]}] -> false negative')
+        return self.true_positive_counter, self.true_negative_counter, self.false_positive_counter, self.false_negative_counter
+
+
+
 # Normalize class added 12/12/2021
 # class Normalize():
 #   def __init__(self):
@@ -488,7 +530,7 @@ class ImageDataset(Dataset) :
       # pad for shifting into
       image = np.pad(image, pad_width=((mx_x,mx_x),(mx_yz,mx_yz),(mx_yz,mx_yz)), mode='constant', constant_values=-1024) # original is zero but appears to work better with -1024 (HU of air)
       # crop to complete shift
-      image = image[mx_x+cc_shift:264+mx_x+cc_shift, mx_yz+ap_shift:264+mx_yz+ap_shift, mx_yz+lr_shift:264+mx_yz+lr_shift]
+      image = image[mx_x+cc_shift:160+mx_x+cc_shift, mx_yz+ap_shift:160+mx_yz+ap_shift, mx_yz+lr_shift:160+mx_yz+lr_shift]
 
     if self.rotations and random.random() < 0.5 : # normal is 0.5
       roll_angle = np.clip(np.random.normal(loc=0,scale=3), -15, 15)
@@ -630,16 +672,16 @@ print(f"After separation into training, validation and testing arrays the number
 
 outcomes_train, outcomes_validate, outcomes_test = create_final_datasets()
 
-training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
-validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
-test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
+training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
+validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
+test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
 
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
 test_dataloader = DataLoader(test_data, batch_size = 4, shuffle = False)
 validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = True)
 
-summary(model, (1,264,264,264), batch_size = 4)
+summary(model, (1,160,160,160), batch_size = 4)
 
 
 #============================ TRAINING AND VALIDATION LOOP ==========
@@ -652,9 +694,13 @@ all_training_losses = []
 epoch_counter = 0
 
 for epoch in range(num_epochs):
+    epoch_validation_targets = []
+    epoch_validation_predictions = []
     epoch_counter += 1
     avg_train_loss = np.append(avg_train_loss, training_loop())
     avg_valid_loss = np.append(avg_valid_loss, validation_loop())
+    epoch_results = results(epoch_validation_targets, epoch_validation_predictions)
+    print(f'(TP, TN, FP, FN): {epoch_results.evaluate_results()}')
     save_loss_plots()
 
 
