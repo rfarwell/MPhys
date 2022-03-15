@@ -614,7 +614,6 @@ check_day = 365 * user_choice_of_check_day # This is defining the timeframe for 
 # sanity check to check progress
 counter = 0 
 
-
 # Creating empty arrays that will be appended to later
 # These will contain the patient ID and dead status (on the check day).
 training_array = []
