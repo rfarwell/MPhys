@@ -202,7 +202,7 @@ def training_loop():
         outputs = model(images)
         print(f'Outputs: {outputs}')
         print(f'Labels: {labels}')
-        # print (outputs)
+        # print(outputs)
         loss = criterion(outputs, labels)
         
         # BACKWARD PASS

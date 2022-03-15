@@ -55,7 +55,7 @@ import time
 
 if len(sys.argv) < 4 :
   print("Error: User inputs are wrong.")
-  print("The correct usage is: '/content/gdrive/MyDrive/University/Year_4_Sem_2/BinaryClassifier.py' <Number of epochs> <Check day>  <Plot save name.png>")
+  print("The correct usage is: '/content/gdrive/MyDrive/University/Year_4_Sem_2/BinaryClassifier.py' <Number of epochs> <Check day>  <Do you want to use full dataset> <Plot save name.png>")
 
 #NUMBER OF EPOCHS
 num_epochs = int(sys.argv[1])
@@ -64,10 +64,10 @@ num_epochs = int(sys.argv[1])
 user_choice_of_check_day = float(sys.argv[2])
 
 #WHETHER TO USE FULL DATASET OR PARTIAL DATASET
-if sys.argv[3].lower() == 'true' :
+if sys.argv[3].lower() == 'full' :
   print('You chose to run the full dataset')
   full_dataset_choice = True
-elif sys.argv[3].lower() == 'false' :
+elif sys.argv[3].lower() == 'partial' :
   print('You chose to run the partial dataset')
   full_dataset_choice = False
 else:
@@ -76,14 +76,11 @@ else:
 
 #FILENAME
 # Create a folder at path "folder path" if one does not already exist
-if not os.path.exists("/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/Loss_plots/"):
-  os.makedirs("folder path")
-
 plot_filename = sys.argv[4]
 print(plot_filename)
 plot_date = time.strftime("%Y_%m_%d")
 plot_time = time.strftime("%H_%M_%S")
-plot_folder_path = f"/content/gdrive/MyDrive/University/Year_4_Sem_2/MPhys_Plots/Loss_plots/{plot_date}/"
+plot_folder_path = f"/home/rory_farwell1_gmail_com/data/rory_and_pat_results/loss_plots/{plot_date}/"
 if not os.path.exists(plot_folder_path):
   os.makedirs(plot_folder_path)
 
@@ -99,8 +96,9 @@ if not os.path.exists(plot_folder_path):
 #=================== SELECT DEVICE ==================================
 #====================================================================
 
-# Connect to GPU is available
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# Connect to GPU is available (Using cuda:1 so that the other pair can use cuda:0)
+device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
+torch.cuda.set_device(device)
 print(f'Using {device} device')
 # /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
 # Specify project folder location
@@ -117,8 +115,8 @@ if full_dataset_choice == False:
   print(os.path.join(project_folder, clinical_data_filename))
 elif full_dataset_choice == True:
   print("You chose to use the full dataset")
-  project_folder = "/content/gdrive/MyDrive/Data/"
-  clinical_data_filename = "Final-NSCLC-Radiomics-Clinical-Data.csv"
+  project_folder = "/home/rory_farwell1_gmail_com/data/rory_and_pat_data/"
+  clinical_data_filename = "382_metadata.csv"
   print(os.path.join(project_folder, clinical_data_filename))
 
 
@@ -303,11 +301,9 @@ def training_loop():
         # print(hot_labels.size())
         # print(hot_labels)
 
-   
-
         #forward pass
         outputs = model(images)
-        # print (outputs)
+        print(outputs)
         loss = criterion(outputs, hot_labels)
 
         #backwards pass
@@ -323,7 +319,7 @@ def training_loop():
         all_training_losses.append(loss.item())
         epoch_train_loss += loss.item()
 
-        if (i+1)%1 == 0 :
+        if (i+1)%5 == 0 :
             print(f'Epoch {epoch+1}/{num_epochs}, step {i+1}/{n_total_steps}, loss = {loss.item():.4f}')
 
     # Append the train_loss list with the total training loss for this epoch
@@ -331,9 +327,9 @@ def training_loop():
 
     #Append the avg_train_loss list with the average training loss of this epoch
     avg_train_loss = epoch_train_loss/n_training_samples
-    print(f"Average training loss list: {avg_train_loss}")
+    print(f"Average training loss this epoch is: {avg_train_loss}")
 
-    print(f"Training loss array at end of epoch {epoch + 1}: {train_loss}. Total number of images used = {n_training_samples}.")
+    print(f"Average training loss array at end of epoch {epoch + 1}: {train_loss}. Total number of images used = {n_training_samples}.")
     print(f"Finished training for epoch {epoch + 1}")
 
     return avg_train_loss
@@ -370,6 +366,24 @@ def validation_loop() :
             n_valid_samples += labels.shape[0]
             n_valid_correct += (predictions == targets).sum().item()
             #print(f'n_correct = {n_correct}. n_samples = {n_samples}')
+            
+
+            # Creating arrays that will be used to create an object for the results.
+            # From this data metrics will be calculated
+            labels_numpy = labels.numpy()
+            # print(f"labels_numpy = {labels_numpy}")
+
+            for index in range(labels_numpy.size) :
+              epoch_validation_targets.append(labels_numpy[index])
+        
+            # print(f"epoch_validation_targets = {epoch_validation_targets}")
+
+            predictions_numpy = predictions.cpu().numpy()
+            for index in range(predictions_numpy.size) :
+              epoch_validation_predictions.append(predictions_numpy[index])
+
+            # print(f"epoch_validation_predictions = {epoch_validation_predictions}")
+
         avg_valid_loss = valid_epoch_loss/n_valid_samples
         #valid_loss.append(valid_epoch_loss)
         acc = (100*n_valid_correct)/n_valid_samples
@@ -378,13 +392,7 @@ def validation_loop() :
         
         # Creating arrays that will be used to create an object for the results.
         # From this data metrics will be calculated
-        labels_numpy = labels.numpy()
-        for i in range(labels_numpy.size) :
-          epoch_validation_targets.append(labels_numpy[i])
 
-        predictions_numpy = predictions.cpu().numpy()
-        for i in range(predictions_numpy.size) :
-          epoch_validation_predictions.append(predictions_numpy[i])
         
 
         print(f'Finished validation for epoch {epoch+1}')
@@ -422,7 +430,7 @@ def testing_loop():
 
     return acc
 
-def window_and_level(image, level = 700, window = 1000) :
+def window_and_level(image, level = -600, window = 1500) :
   maxval = level + window/2
   minval = level - window/2
   wld = np.clip(image, minval, maxval)
@@ -482,17 +490,6 @@ class results :
                 self.false_negative_counter += 1 
                 # print(f'[{self.expected[i]},{self.predicted[i]}] -> false negative')
         return self.true_positive_counter, self.true_negative_counter, self.false_positive_counter, self.false_negative_counter
-
-
-
-# Normalize class added 12/12/2021
-# class Normalize():
-#   def __init__(self):
-#     pass
-
-#   def __call__(self,vol):
-#     vol =((vol-(vol.mean()))/vol.std()) + 1
-#     return vol
 
 transform = transforms.Compose(
     [transforms.ToTensor()] #added 13/12/2021 to normalize the inputs. THIS NORMALIZES to mean = 0 and std = 1
@@ -670,14 +667,14 @@ print(f"After separation into training, validation and testing arrays the number
 
 outcomes_train, outcomes_validate, outcomes_test = create_final_datasets()
 
-training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
-validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
-test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "Final_Textured_Masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
+training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
+validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
+test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
 
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
 test_dataloader = DataLoader(test_data, batch_size = 4, shuffle = False)
-validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = True)
+validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = False)
 
 summary(model, (1,160,160,160), batch_size = 4)
 
@@ -697,6 +694,8 @@ for epoch in range(num_epochs):
     epoch_counter += 1
     avg_train_loss = np.append(avg_train_loss, training_loop())
     avg_valid_loss = np.append(avg_valid_loss, validation_loop())
+    print(f"epoch_validation_targets = {epoch_validation_targets}")
+    print(f"epoch_validation_predictions = {epoch_validation_predictions}")
     epoch_results = results(epoch_validation_targets, epoch_validation_predictions)
     print(f'(TP, TN, FP, FN): {epoch_results.evaluate_results()}')
     save_loss_plots()
