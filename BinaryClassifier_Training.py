@@ -10,6 +10,7 @@ Rory Farwell and Patrick Hastings 08/02/2022
 #======================= IMPORTING FUNCTIONS ========================
 #====================================================================
 import os
+from click import open_file
 print(f'Running {__file__}')
 # Un hash below if on Google Colab
 # !pip install torch torchvision
@@ -46,6 +47,7 @@ from torch.optim import Adam
 import torchvision.models as models
 from torch.autograd import Variable
 from torchsummary import summary
+import pickle
 
 from scipy.ndimage import zoom, rotate
 
@@ -53,9 +55,10 @@ from scipy.ndimage import zoom, rotate
 import sys
 import time
 
-if len(sys.argv) < 4 :
+if len(sys.argv) < 6 :
   print("Error: User inputs are wrong.")
-  print("The correct usage is: '/content/gdrive/MyDrive/University/Year_4_Sem_2/BinaryClassifier.py' <Number of epochs> <Check day>  <Do you want to use full dataset> <Plot save name.png>")
+  print("The correct usage is: BinaryClassifier_Training.py <Number of epochs> <Check day>  <Full or partial dataset> <Do you want to use full dataset> <Plot save name.png>")
+  sys.exit(1)
 
 #NUMBER OF EPOCHS
 num_epochs = int(sys.argv[1])
@@ -78,12 +81,20 @@ else:
 # Create a folder at path "folder path" if one does not already exist
 plot_filename = sys.argv[4]
 print(plot_filename)
-plot_date = time.strftime("%Y_%m_%d")
-plot_time = time.strftime("%H_%M_%S")
-plot_folder_path = f"/home/rory_farwell1_gmail_com/data/rory_and_pat_results/loss_plots/{plot_date}/"
+date = time.strftime("%Y_%m_%d")
+time = time.strftime("%H_%M_%S")
+plot_folder_path = f"/home/rory_farwell1_gmail_com/data/rory_and_pat_results/loss_plots/{date}/"
 if not os.path.exists(plot_folder_path):
   os.makedirs(plot_folder_path)
 
+
+network_filename = sys.argv[5]
+network_folder_path = f"/home/rory_farwell1_gmail_com/data/rory_pat_network_saves/{date}/"
+if not os.path.exists(network_folder_path):
+  os.makedirs(network_folder_path)
+
+print(f"The best network from this training run will be saved in the following path:")
+print(f"{network_folder_path}{network_filename}")
 
 #====================================================================
 #=================== COLAB SPECIFIC CODE ============================
@@ -97,7 +108,7 @@ if not os.path.exists(plot_folder_path):
 #====================================================================
 
 # Connect to GPU is available (Using cuda:1 so that the other pair can use cuda:0)
-device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu' #CHANGE THIS BACK TO CUDA 1
 torch.cuda.set_device(device)
 print(f'Using {device} device')
 # /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
@@ -438,7 +449,6 @@ def window_and_level(image, level = -600, window = 1500) :
   wld *= 1/window
   return wld
 
-
 def save_loss_plots():
   new_avg_train_loss = avg_train_loss
   new_avg_valid_loss = avg_valid_loss
@@ -453,8 +463,8 @@ def save_loss_plots():
   plt.legend(loc = 'best', prop={'size': 20})
   plt.ylabel('Average Loss', fontsize = 20)
   plt.xlabel('Epoch Number', fontsize = 20)
-  plt.savefig(f'{plot_folder_path}{plot_time}_{plot_filename}_epoch_{epoch_counter}')
-  print(f'The loss plot has been saved in: {plot_folder_path}{plot_date}/{plot_time}_{plot_filename}_epoch_{epoch_counter}')
+  plt.savefig(f'{plot_folder_path}{time}_{plot_filename}_epoch_{epoch_counter}')
+  print(f'The loss plot has been saved in: {plot_folder_path}{date}/{time}_{plot_filename}_epoch_{epoch_counter}')
 
   return
 
@@ -494,7 +504,6 @@ class results :
 transform = transforms.Compose(
     [transforms.ToTensor()] #added 13/12/2021 to normalize the inputs. THIS NORMALIZES to mean = 0 and std = 1
 )
-
 
 class ImageDataset(Dataset) :
   def __init__(self, annotations, img_dir, transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True) :
@@ -585,21 +594,25 @@ class ImageDataset(Dataset) :
 class CNN(nn.Module):   
     def __init__(self):
       super(CNN, self).__init__()
-      self.conv1 = nn.Conv3d(1,32,2,2)
+      self.conv1 = nn.Conv3d(1,32,3,1)
       self.pool = nn.MaxPool3d(2,2)
-      self.avg_pool = nn.AvgPool3d(10)
-      self.conv2 = nn.Conv3d(32,128,2,2)
-      self.conv3 = nn.Conv3d(128,64,1,1)
-      self.conv4 = nn.Conv3d(64,16,1,1)
-      self.conv5 = nn.Conv3d(16,2,1,1)
+      self.avg_pool = nn.AvgPool3d(8)
+      self.conv2 = nn.Conv3d(32,64,3,1)
+      self.conv3 = nn.Conv3d(64,128,3,1)
+      self.conv4 = nn.Conv3d(128,256,3,1)
+      self.conv5 = nn.Conv3d(256,64,1,1)
+      self.conv6 = nn.Conv3d(64,16,1,1)
+      self.conv7 = nn.Conv3d(16,2,1,1)
 
     # Defining the forward pass  (NIN method)  
     def forward(self, x):
         x = self.pool(F.leaky_relu(self.conv1(x)))
         x = self.pool(F.leaky_relu(self.conv2(x)))
-        x = F.leaky_relu(self.conv3(x))
-        x = F.leaky_relu(self.conv4(x))
-        x = self.avg_pool(self.conv5(x))
+        x = self.pool(F.leaky_relu(self.conv3(x)))
+        x = self.pool(F.leaky_relu(self.conv4(x)))
+        x = F.leaky_relu(self.conv5(x))
+        x = F.leaky_relu(self.conv6(x))
+        x = self.avg_pool(self.conv7(x))
         x = x.view(-1,2)
         return x
         
@@ -666,6 +679,11 @@ print(f"After separation into training, validation and testing arrays the number
 
 outcomes_train, outcomes_validate, outcomes_test = create_final_datasets()
 
+open_file = open("testing_data_list.pkl", "wb")
+pickle.dump(outcomes_test, open_file)
+open_file.close()
+
+
 training_data = ImageDataset(outcomes_train, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
 validation_data = ImageDataset(outcomes_validate, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
 test_data = ImageDataset(outcomes_test, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
@@ -686,18 +704,26 @@ avg_train_loss = np.empty(0)
 avg_valid_loss = np.empty(0)
 all_training_losses = []
 epoch_counter = 0
+minimum_average_validation_loss = 100000
 
 for epoch in range(num_epochs):
     epoch_validation_targets = []
     epoch_validation_predictions = []
     epoch_counter += 1
     avg_train_loss = np.append(avg_train_loss, training_loop())
-    avg_valid_loss = np.append(avg_valid_loss, validation_loop())
+    epoch_average_validation_loss = validation_loop()
+    avg_valid_loss = np.append(avg_valid_loss, epoch_average_validation_loss)
+
+    if epoch_average_validation_loss < minimum_average_validation_loss :
+      minumum_average_validation_loss = epoch_average_validation_loss
+      torch.save(model.state_dict(), f'{network_folder_path}{network_filename}_epoch{epoch+1}')
+
     print(f"epoch_validation_targets = {epoch_validation_targets}")
     print(f"epoch_validation_predictions = {epoch_validation_predictions}")
     epoch_results = results(epoch_validation_targets, epoch_validation_predictions)
     print(f'(TP, TN, FP, FN): {epoch_results.evaluate_results()}')
-    save_loss_plots()
+    if (epoch+1)%5 == 0 :
+      save_loss_plots()
 
 
 print('FINISHED TRAINING')
@@ -705,23 +731,6 @@ print(f'All training batch losses = {all_training_losses}')
 print(f'Training losses = {train_loss}')
 print(f'Average training losses = {avg_train_loss}')
 print(f'Validation losses = {avg_valid_loss}')
-
-#===================== PLOT LOSS CURVES =============================
-# new_avg_train_loss = avg_train_loss
-# new_avg_valid_loss = avg_valid_loss
-
-# epochs = np.array(range(num_epochs)) + 1
-# loss_plot = plt.figure()
-# plt.xticks(fontsize = 20)
-# plt.yticks(fontsize = 20)
-# loss_plot.set_size_inches(20,10)
-# plt.plot(epochs, new_avg_train_loss, label = 'Average training loss', linewidth = 7.0)
-# plt.plot(epochs, new_avg_valid_loss, label = 'Average validation loss', linewidth = 7.0)
-# loss_plot.legend(loc = 'best', prop={'size': 20})
-# plt.ylabel('Average Loss', fontsize = 20)
-# plt.xlabel('Epoch Number', fontsize = 20)
-# plt.savefig(f'{plot_folder_path}{plot_filename}')
-# print(f'The loss plot has been saved in: {plot_folder_path}{plot_filename}')
 
 #===================== TESTING LOOP =================================
 testing_accuracy = testing_loop()

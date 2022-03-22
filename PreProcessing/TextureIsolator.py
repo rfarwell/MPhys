@@ -7,8 +7,11 @@ import SimpleITK as sitk
 import os
 import numpy as np
 
-main_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_resampled_cropped_GTV-1/"
-write_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_textured_masks_GTV-1/"
+# main_folder_filepath = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_cropped_GTV-1/"
+# write_folder_filepath = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_textured_masks_GTV-1/"
+
+main_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_resampled_cropped_GTV-12/"
+write_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_textured_masks_GTV-12/"
 
 CT_filenames = []
 mask_filenames = []
