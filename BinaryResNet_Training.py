@@ -216,8 +216,8 @@ open_file = open("testing_data_list.pkl", "wb")
 pickle.dump(outcomes_test, open_file)
 open_file.close()
 
-training_data = ImageDataset_Class.ImageDataset(outcomes_train, os.path.join(project_folder, "textured_masks"), transform = transform)
-validation_data = ImageDataset_Class.ImageDataset(outcomes_validate, os.path.join(project_folder, "textured_masks"), transform = transform)
+training_data = ImageDataset_Class.ImageDataset(outcomes_train, os.path.join(project_folder, "textured_masks"), transform = transform,  target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
+validation_data = ImageDataset_Class.ImageDataset(outcomes_validate, os.path.join(project_folder, "textured_masks"), transform = transform,  target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
 
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
