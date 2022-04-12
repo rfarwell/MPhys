@@ -1,7 +1,7 @@
 """
 This code trains, validates and tests a custom binary classfiying CNN.
 
-The inputs to the network are 264 x 264 x 264 textured masks of NSCLC pre-treatment CT scans.
+The inputs to the network are 160 x 160 x 160 textured masks of NSCLC pre-treatment CT scans.
 
 Rory Farwell and Patrick Hastings 08/02/2022
 
@@ -9,6 +9,7 @@ Rory Farwell and Patrick Hastings 08/02/2022
 #====================================================================
 #======================= IMPORTING FUNCTIONS ========================
 #====================================================================
+from genericpath import getctime
 import os
 from click import open_file
 print(f'Running {__file__}')
@@ -74,7 +75,16 @@ import torch.nn.functional as F
 import pickle
 from colorama import Fore
 
-num_epochs, user_choice_of_check_day, plot_folder_path, network_filepath, plot_filename = SysArg.get_system_arguments(sys.argv)
+num_epochs, user_choice_of_check_day, plot_folder_path, network_filepath, plot_filename, run_mode = SysArg.get_system_arguments(sys.argv)
+
+if run_mode == "-test":
+    test_run = True
+elif run_mode == "-full":
+    test_run = False
+else:
+    print("input error, final argument of input should be -test or -full")
+    sys.exit(1)
+
 print(num_epochs, user_choice_of_check_day, plot_folder_path, network_filepath)
 print(Fore.CYAN + "############# USERINPUTS #############")
 print(f"Number of epochs = {num_epochs}")
@@ -118,7 +128,9 @@ def convert_to_one_hot_labels(images, labels) :
     
     return hot_labels
 
-def save_loss_plots():
+def save_loss_plots(test_run):
+  if test_run == True:
+      return
   new_avg_train_loss = avg_train_loss
   new_avg_valid_loss = avg_valid_loss
 
@@ -169,8 +181,9 @@ batch_size = 4
 learning_rate = 0.001
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', verbose=True)
+#optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9) #Stochastic gradient descent.
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', verbose=True) #Learning rate scheduler
 
 #====================================================================
 #=================== MAIN CODE ======================================
@@ -216,18 +229,25 @@ open_file = open("testing_data_list.pkl", "wb")
 pickle.dump(outcomes_test, open_file)
 open_file.close()
 
-training_data = ImageDataset_Class.ImageDataset(outcomes_train, os.path.join(project_folder, "textured_masks"), transform = transform,  target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
-validation_data = ImageDataset_Class.ImageDataset(outcomes_validate, os.path.join(project_folder, "textured_masks"), transform = transform,  target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
+training_data = ImageDataset_Class.ImageDataset(outcomes_train, os.path.join(project_folder, "CTV_textured_masks"), transform = transform, target_transform = None, shift_augment = True, rotate_augment = True, scale_augment = True, flip_augment = True)
+validation_data = ImageDataset_Class.ImageDataset(outcomes_validate, os.path.join(project_folder, "CTV_textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
 
 
 train_dataloader = DataLoader(training_data, batch_size = 4, shuffle = True)
 validation_dataloader = DataLoader(validation_data, batch_size = 4, shuffle = True)
 
-summary(model, (1,160,160,160), batch_size = 4)
+summary(model, (1,180,180,180), batch_size = 4)
 patient = ""
 
 #============================ TRAINING AND VALIDATION LOOP ==========
-writer = customWriter(project_folder, 4, 0, 1)
+import glob
+import shutil
+writer = customWriter(project_folder, 4, 0, 1, test_run)
+if test_run == True:
+    list_of_files = glob.glob("runs/*")
+    latest_file = max(list_of_files, key=os.path.getctime)
+    shutil.rmtree(f"{latest_file}")
+
 writer.epoch = 0
 n_total_steps = len(train_dataloader)
 train_loss = []
@@ -237,6 +257,7 @@ avg_valid_loss = np.empty(0)
 all_training_losses = []
 epoch_counter = 0
 minimum_average_validation_loss = 100000
+current_best_epoch = 0
 
 for epoch in range(num_epochs):
     #send train loss and val loss to tb from here?
@@ -245,14 +266,19 @@ for epoch in range(num_epochs):
     epoch_validation_predictions = []
     epoch_counter += 1
     avg_train_loss = np.append(avg_train_loss, Loops.training_loop(epoch, model, train_dataloader, device, writer, criterion, optimizer, all_training_losses,
-    num_epochs, n_total_steps, train_loss))
+    num_epochs, n_total_steps, train_loss, test_run))
     epoch_average_validation_loss = Loops.validation_loop(epoch, model, validation_dataloader, device, criterion, epoch_validation_targets, 
-    epoch_validation_predictions, writer)
+    epoch_validation_predictions, writer, test_run)
     avg_valid_loss = np.append(avg_valid_loss, epoch_average_validation_loss)
-    if epoch_average_validation_loss < minimum_average_validation_loss :
+
+    if epoch_average_validation_loss < minimum_average_validation_loss and test_run==False:
+      #if current_best_epoch != 0 :
+          #os.remove(f'{network_filepath}_epoch{current_best_epoch}')
+      current_best_epoch = epoch+1
       minumum_average_validation_loss = epoch_average_validation_loss
       torch.save(model.state_dict(), f'{network_filepath}_epoch{epoch+1}')
       epoch_save_number = epoch+1
+      
     scheduler.step(avg_valid_loss[epoch])
     # print(f"epoch_validation_targets = {epoch_validation_targets}")
     # print(f"epoch_validation_predictions = {epoch_validation_predictions}")
@@ -262,7 +288,7 @@ for epoch in range(num_epochs):
     # print(type(conf_mat))
     if (epoch+1)%5 == 0:
       writer.plot_confusion_matrix(conf_mat, ["alive","dead"])
-      save_loss_plots()
+      save_loss_plots(test_run)
 
 print('FINISHED TRAINING')
 print(Fore.CYAN + f"The best performing network from this training run was saved"
