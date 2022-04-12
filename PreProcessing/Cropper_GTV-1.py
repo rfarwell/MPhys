@@ -17,9 +17,11 @@ import SimpleITK as sitk
 from colorama import Fore
 from colorama import Style
 import matplotlib.pyplot as plt
+from scipy.ndimage import binary_dilation, generate_binary_structure
+from torch import int32
 
 nifty_path = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_CT_and_RTSTRUCT"
-output_path = "/Volumes/Seagate_HDD/NSCLC_resampled_cropped_GTV-1"
+output_path = "/Volumes/Seagate_HDD/Dilated_NSCLC_resampled_cropped_GTV-1"
 
 def get_CoM(input_mask) :
     """
@@ -152,8 +154,10 @@ print(f"{Fore.YELLOW}Write path: {output_path}{Style.RESET_ALL}")
 #         print(filename)
 #     else:
 #         continue
+
 tumour_sizes = []
 remove_counter = 0
+break_counter = 0
 for filename in os.listdir(nifty_path) :
     if"-GTV-1" in filename:
         """
@@ -162,62 +166,72 @@ for filename in os.listdir(nifty_path) :
         Finds the largest overall distance from CoM to edge of a tumour which defines the size of
         our crop
         """
+        break_counter+=1
         print(f"Currently determining CoM and largest axis size for {filename}")
         GTV_1_mask_image = sitk.ReadImage(os.path.join(nifty_path,filename))
-        GTV_1_mask_array = sitk.GetArrayFromImage(GTV_1_mask_image)
+        GTV_1_mask_array_original = sitk.GetArrayFromImage(GTV_1_mask_image)
+        GTV_1_mask_array = binary_dilation(GTV_1_mask_array_original, iterations=10)
         CoM_temp = get_CoM(GTV_1_mask_array)
         CoMs.append(CoM_temp)
         print(f"After processing {filename} CoMs (array) length: {len(CoMs)}")
-        temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
-        tumour_sizes.append(temp_largest_tumour_axis)
-        print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
-        if temp_largest_tumour_axis > largest_tumour_axis :
-            largest_tumour_axis = temp_largest_tumour_axis
-            largest_axis_filename = str(filename)
-            print(f"{Fore.GREEN}Largest tumour axis updated to {largest_tumour_axis}{Style.RESET_ALL}")
-    else :
-        continue
+        if break_counter == 1:
+            break
+    #     temp_largest_tumour_axis = largest_gtv_finder(GTV_1_mask_array, CoMs)
+    #     tumour_sizes.append(temp_largest_tumour_axis)
+    #     print(f"Largest tumour axis of {filename} : {temp_largest_tumour_axis}")
+    #     if temp_largest_tumour_axis > largest_tumour_axis :
+    #         largest_tumour_axis = temp_largest_tumour_axis
+    #         largest_axis_filename = str(filename)
+    #         print(f"{Fore.GREEN}Largest tumour axis updated to {largest_tumour_axis}{Style.RESET_ALL}")
+    # else :
+    #     continue
 
-print(f'Tumour sizes (with a list length of {len(tumour_sizes)}) = {tumour_sizes}.')
-plt.hist(tumour_sizes, bins = range(int(min(tumour_sizes)), int(max(tumour_sizes)), 1))
-plt.xlabel('Tumour axis size')
-plt.ylabel('Frequency')
-plt.show()
+# print(f'Tumour sizes (with a list length of {len(tumour_sizes)}) = {tumour_sizes}.')
+# plt.hist(tumour_sizes, bins = range(int(min(tumour_sizes)), int(max(tumour_sizes)), 1))
+# plt.xlabel('Tumour axis size')
+# plt.ylabel('Frequency')
+# plt.show()
 
+largest_tumour_axis = 75
 
 cropping_size = largest_tumour_axis + 15 # +15 because we want to pad by 1.5cm in each direction
-print(f"The cropping size is {cropping_size} from {largest_axis_filename}")
+# print(f"The cropping size is {cropping_size} from {largest_axis_filename}")
 print(f"The length of CoMs is: {len(CoMs)}")
 
 
-# """ Will need to repeat this step for ALL_GTV masks and CTs"""
-# counter = -0.5
-# for filename in os.listdir(nifty_path) :
-#     if "ALL_GTV" in filename :
-#         continue
-#     else :
-#         counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
-#         print(filename)
-#         index = np.floor(counter)
-#         index = int(index)
-#         print(index)
-#         CoM_index = CoMs[index]
-#         print(f"CoM: {CoM_index}")
+""" Will need to repeat this step for ALL_GTV masks and CTs"""
+counter = -0.5
+for filename in os.listdir(nifty_path) :
+    if "ALL_GTV" in filename :
+        continue
+    else :
+        counter += 0.5 # avoiding the index issues previously experienced that was due to the removal of some data during the resampling process
+        print(filename)
+        index = np.floor(counter)
+        index = int(index)
+        print(index)
+        CoM_index = CoMs[index]
+        print(f"CoM: {CoM_index}")
 
-#         image = sitk.ReadImage(os.path.join(nifty_path, filename))
-#         print(f"Original image size: {image.GetSize()}")
-#         print(f"Original image origin: {image.GetOrigin()}")
-#         array = sitk.GetArrayFromImage(image)
-#         print(f"Original array size: {array.shape}")
+        image = sitk.ReadImage(os.path.join(nifty_path, filename))
+        print(f"Original image size: {image.GetSize()}")
+        print(f"Original image origin: {image.GetOrigin()}")
+        array = sitk.GetArrayFromImage(image)
+        print(f"Original array size: {array.shape}")
+        if "GTV-1" in filename:
+            print(f'mask filename: {filename}')
+            array_original = array
+            array = binary_dilation(array_original, iterations=10)
+        cropped_array = cropping(array, CoM_index, cropping_size, filename)
 
-#         cropped_array = cropping(array, CoM_index, cropping_size, filename)
-
-#         print(f"Cropped array shape : {cropped_array.shape}")
-
-#         cropped_image = sitk.GetImageFromArray(cropped_array)
-#         cropped_image.SetDirection(image.GetDirection())
-#         cropped_image.SetSpacing(image.GetSpacing())
-#         cropped_image.SetOrigin(image.GetOrigin())
-#         sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
+        print(f"Cropped array shape : {cropped_array.shape}")
+        if "GTV-1" in filename:
+            cropped_image = sitk.GetImageFromArray(cropped_array.astype(np.float32)) 
+        elif "-CT" in filename:
+            cropped_image = sitk.GetImageFromArray(cropped_array.astype(np.int32)) 
+        
+        cropped_image.SetDirection(image.GetDirection())
+        cropped_image.SetSpacing(image.GetSpacing())
+        cropped_image.SetOrigin(image.GetOrigin())
+        sitk.WriteImage(cropped_image, f"{output_path}/{filename}.nii")
 #=======================================================================  
-

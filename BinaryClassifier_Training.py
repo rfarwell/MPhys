@@ -12,11 +12,6 @@ Rory Farwell and Patrick Hastings 08/02/2022
 import os
 from click import open_file
 print(f'Running {__file__}')
-# Un hash below if on Google Colab
-# !pip install torch torchvision
-# !pip install opencv-contrib-python
-# !pip install scikit-learn
-# !pip install SimpleITK
 
 import numpy as np
 import random
@@ -67,6 +62,7 @@ num_epochs = int(sys.argv[1])
 user_choice_of_check_day = float(sys.argv[2])
 
 #WHETHER TO USE FULL DATASET OR PARTIAL DATASET
+
 if sys.argv[3].lower() == 'full' :
   print('You chose to run the full dataset')
   full_dataset_choice = True
@@ -97,13 +93,6 @@ print(f"The best network from this training run will be saved in the following p
 print(f"{network_folder_path}{network_filename}")
 
 #====================================================================
-#=================== COLAB SPECIFIC CODE ============================
-#====================================================================
-
-# from google.colab import drive
-# drive.mount('/content/gdrive')
-
-#====================================================================
 #=================== SELECT DEVICE ==================================
 #====================================================================
 
@@ -111,8 +100,6 @@ print(f"{network_folder_path}{network_filename}")
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu' #CHANGE THIS BACK TO CUDA 1
 torch.cuda.set_device(device)
 print(f'Using {device} device')
-# /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv
-# Specify project folder location
 
 """
 For Rory (short patient list): /content/gdrive/MyDrive/MPhys/Data/COLAB-Clinical-Data.csv

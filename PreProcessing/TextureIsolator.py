@@ -10,8 +10,8 @@ import numpy as np
 # main_folder_filepath = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_resampled_cropped_GTV-1/"
 # write_folder_filepath = "/Volumes/Extreme_SSD/MPhys/TCIA_Data/NSCLC-Radiomics/NSCLC_textured_masks_GTV-1/"
 
-main_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_resampled_cropped_GTV-12/"
-write_folder_filepath = "/Volumes/Seagate_HDD/NSCLC_textured_masks_GTV-12/"
+main_folder_filepath = "/Volumes/Seagate_HDD/Dilated_NSCLC_resampled_cropped_GTV-1/"
+write_folder_filepath = "/Volumes/Seagate_HDD/Dilated_NSCLC_textured_masks_GTV-1/"
 
 CT_filenames = []
 mask_filenames = []
@@ -29,10 +29,11 @@ for i in range(len(CT_filenames)) :
     temp_CT_filename = CT_filenames[i]
     temp_mask_filename = mask_filenames[i]
     temp_mask_image = sitk.ReadImage(os.path.join(main_folder_filepath, temp_mask_filename))
+    print(f"Opened mask: {temp_mask_filename}")
     temp_CT_image = sitk.ReadImage(os.path.join(main_folder_filepath, temp_CT_filename))
-
-    print(f"Mask original size, origin, direction: {temp_mask_image.GetSpacing()}, {temp_mask_image.GetOrigin()}, {temp_mask_image.GetDirection()}.")
-    print(f"CT original size, origin, direction: {temp_CT_image.GetSpacing()}, {temp_CT_image.GetOrigin()}, {temp_CT_image.GetDirection()}.")
+    print(f"Opened mask: {temp_CT_filename}")
+    #print(f"Mask original size, origin, direction: {temp_mask_image.GetSpacing()}, {temp_mask_image.GetOrigin()}, {temp_mask_image.GetDirection()}.")
+    #print(f"CT original size, origin, direction: {temp_CT_image.GetSpacing()}, {temp_CT_image.GetOrigin()}, {temp_CT_image.GetDirection()}.")
 
     temp_mask_array = sitk.GetArrayFromImage(temp_mask_image)
     temp_CT_array = sitk.GetArrayFromImage(temp_CT_image)
@@ -44,7 +45,7 @@ for i in range(len(CT_filenames)) :
     textured_mask_image.SetOrigin(temp_mask_image.GetOrigin()) 
     textured_mask_image.SetDirection(temp_mask_image.GetDirection())
 
-    print(f"{textured_mask_image.GetSpacing()}, {textured_mask_image.GetOrigin()},  {textured_mask_image.GetDirection()}")
+    #print(f"{textured_mask_image.GetSpacing()}, {textured_mask_image.GetOrigin()},  {textured_mask_image.GetDirection()}")
 
     sitk.WriteImage(textured_mask_image, os.path.join(write_folder_filepath, temp_mask_filename))
     print(f"Finished writing {temp_mask_filename}")

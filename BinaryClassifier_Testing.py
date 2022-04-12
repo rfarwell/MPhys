@@ -293,5 +293,6 @@ testing_results = results(testing_targets, testing_predictions)
 print(f"Targets: {testing_targets}")
 print(f"Predictions: {testing_predictions}")
 print(f'(TP, TN, FP, FN): {testing_results.evaluate_results()}')
+print(f'Accuracy on testing set = {testing_accuracy:.1f}%')
 
 
