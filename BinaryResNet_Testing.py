@@ -73,6 +73,8 @@ import Import_Functions.testing_loop as loop
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
+from medcam import medcam
+
 ############################################################
 # Using GPU 1, which is the one that has been allocated to us
 device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
@@ -211,32 +213,50 @@ outcomes_test = pickle.load(open_file)
 open_file.close()
 # print(outcomes_test)
 
-test_data = ImageDataset_Class.ImageDataset(outcomes_test, os.path.join(project_folder, "textured_masks"), transform = transform,  target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False)
-# test_dataloader = DataLoader(test_data, batch_size = 4, shuffle = False)
-test_dataloader = DataLoader(test_data, batch_size = 1, shuffle = False)
+test_data = ImageDataset_Class.ImageDataset(outcomes_test, os.path.join(project_folder, "textured_masks"), transform = transform, target_transform = None, shift_augment = False, rotate_augment = False, scale_augment = False, flip_augment = False) 
+test_dataloader = DataLoader(test_data, batch_size = 1, shuffle = True)
+# test_dataloader = DataLoader(test_data, batch_size = 1, shuffle = False)
 
 model = RN.generate_model(10, device)
 model.load_state_dict(torch.load(sys.argv[1]))
 
+# for name, param in model.named_parameters():
+#     if param.requires_grad:
+#         print (name, param.data[0])
+
+# model = medcam.inject(model, output_dir="medcam_test", save_maps=True, layer = "layer2", data_shape = (160,160,160))
+# print(medcam.get_layers(model))
+# model.eval()
+# for batch in test_dataloader:
+#   image = batch[0][None].to(device, torch.float)
+#   print(image.shape)
+#   output = model(image)
+#   break
 
 
 # print("were here")
 testing_targets = []
 testing_predictions = []
-# testing_accuracy = loop.testing_loop(model, test_dataloader, device, testing_targets, testing_predictions)
+testing_accuracy = loop.testing_loop(model, test_dataloader, device, testing_targets, testing_predictions)
 
 ##########################################################
-target_layers = [model.layer4[-1]]
-data = next(iter(test_dataloader))
-input_tensor = data[0] # image is the first element in the tuple
-print(input.shape )
-with GradCAM(model=model, target_layers = target_layers, use_cuda = True) as cam:
-  targets = None
-  grayscale_cam = cam(input_tensor=input_tensor, targets = targets)
-  visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb = True)
+# target_layers = [model.layer4[-1]]
+# data = next(iter(test_dataloader))
+# input_tensor = data[0][None] # image is the first element in the tuple
+# print(input_tensor.shape )
+# with GradCAM(model=model, target_layers = target_layers, use_cuda = True) as cam:
+#   targets = None
+#   grayscale_cam = cam(input_tensor=input_tensor, targets = targets)
   
-input = input_tensor
-grad_cam = grayscale_cam
+# print(grayscale_cam.shape)
+
+# fig, ax = plt.subplots(1,1, figsize=(10,10))
+
+# im = np.max(np.squeeze(input_tensor.cpu().numpy()), axis = -1)
+# grad_cam = np.max(np.squeeze(grayscale_cam), axis = -1)
+# ax.imshow(im, cmap='gray')
+# ax.imshow(grad_cam, cmap = 'jet')
+# fig.savefig('./test.png')
 
 
 
@@ -250,3 +270,27 @@ print(f"Predictions: {testing_predictions}")
 print(f'(TP, TN, FP, FN): {testing_results.evaluate_results()}')
 print(f'Accuracy on testing set = {testing_accuracy:.1f}%')
 
+model_path = '/home/rory_farwell1_gmail_com/data/rory_pat_network_saves/2022_03_24/test2_epoch1'
+layer = 'conv1'
+model = RN.generate_model(10, device)
+model.load_state_dict(torch.load(model_path))
+model = medcam.inject(model, output_dir="medcam_test", 
+    save_maps=True, layer=layer, replace=True)
+print(medcam.get_layers(model))
+model.eval()
+image, label, pid = next(iter(test_dataloader))
+filename = pid[0][0]
+image = image[None].to(device, torch.float)
+attn = model(image)
+attn = np.squeeze(attn.cpu().numpy())
+img = np.squeeze(image.cpu().numpy())
+print(img.shape, attn.shape)
+slice_num = 80
+fig, ax = plt.subplots(1,1, figsize=(10,10))
+im = img[..., slice_num]
+attn = attn[..., slice_num]
+print(pid)
+print(attn.max(), attn.min())
+ax.imshow(im, cmap='gray')
+ax.imshow(attn, cmap='jet', alpha=0.5)
+fig.savefig('./test.png')
